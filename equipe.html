@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Flowtask – Equipe</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <script src="js/theme.js"></script>
+  <script src="js/auth.js"></script>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main-content">
+    <header class="topbar" id="topbar"></header>
+    <main class="page-content">
+
+      <!-- Filter bar -->
+      <div class="filter-bar">
+        <div class="search-input-wrap" style="flex:1;">
+          <span>🔍</span>
+          <input type="text" id="search-members" placeholder="Buscar por nome, cargo ou e-mail..."/>
+        </div>
+        <select class="filter-select" id="filter-status-member">
+          <option value="">Todos os status</option>
+          <option value="online">🟢 Online</option>
+          <option value="busy">🔴 Ocupado</option>
+          <option value="offline">⚫ Offline</option>
+        </select>
+        <button class="btn btn-primary" onclick="openMemberModal()">+ Adicionar Membro</button>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid" id="team-stats" style="margin-bottom:24px;grid-template-columns:repeat(4,1fr);"></div>
+
+      <!-- Team grid -->
+      <div class="section-header">
+        <div class="section-title" id="member-count">Todos os Membros</div>
+      </div>
+      <div id="members-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;"></div>
+
+    </main>
+  </div>
+</div>
+
+<!-- Modal Membro -->
+<div class="modal-overlay" id="modal-member">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-member-title">👤 Novo Membro</div>
+      <button class="modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-member">
+        <input type="hidden" id="member-edit-id"/>
+        <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:20px;">
+          <div id="member-avatar-preview" style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#6C63FF,#9C8FFF);display:flex;align-items:center;justify-content:center;color:#fff;font-size:28px;font-weight:700;margin-bottom:8px;cursor:pointer;position:relative;overflow:hidden;" onclick="document.getElementById('member-foto-input').click();">
+            <img id="member-avatar-img" style="display:none;width:100%;height:100%;object-fit:cover;"/>
+            <span id="member-avatar-text">?</span>
+            <div style="position:absolute;bottom:0;right:0;background:#6C63FF;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:14px;">📷</div>
+          </div>
+          <div style="font-size:12px;color:var(--text-muted);">Clique para adicionar foto</div>
+          <input type="file" id="member-foto-input" accept="image/*" style="display:none;"/>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Nome Completo <span>*</span></label>
+            <input type="text" class="form-input" id="member-name" placeholder="Ex: João Silva" required/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cargo / Função</label>
+            <input type="text" class="form-input" id="member-role" placeholder="Ex: Desenvolvedor Frontend"/>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">E-mail</label>
+            <input type="email" class="form-input" id="member-email" placeholder="email@empresa.com"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Telefone</label>
+            <input type="text" class="form-input" id="member-phone" placeholder="(11) 9 1234-5678"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Bio / Especialidade</label>
+          <textarea class="form-textarea" id="member-bio" placeholder="Descreva as habilidades e especialidades..." style="min-height:70px;"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-select" id="member-status">
+            <option value="online">🟢 Online</option>
+            <option value="busy">🔴 Ocupado</option>
+            <option value="offline">⚫ Offline</option>
+          </select>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="btn-delete-member" style="display:none;margin-right:auto;">🗑 Remover</button>
+      <button class="btn btn-ghost" onclick="App.closeModal('modal-member')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-save-member">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Detalhes do Membro -->
+<div class="modal-overlay" id="modal-member-detail">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title">👤 Perfil do Membro</div>
+      <button class="modal-close">✕</button>
+    </div>
+    <div class="modal-body" id="member-detail-content"></div>
+  </div>
+</div>
+
+<script src="js/storage.js"></script>
+<script src="js/app.js"></script>
+<script>
+  Storage.initDemoData();
+  document.getElementById('sidebar').innerHTML = getSidebarHTML('equipe.html');
+  document.getElementById('topbar').innerHTML = getTopbarHTML('👥 Equipe', 'Gerencie os membros do time');
+  App.initModal('modal-member');
+  App.initModal('modal-member-detail');
+
+  let searchQuery = '';
+  let statusFilter = '';
+
+  function renderStats() {
+    const members = Storage.getMembers();
+    const online = members.filter(m => m.status === 'online').length;
+    const busy = members.filter(m => m.status === 'busy').length;
+    const offline = members.filter(m => m.status === 'offline').length;
+
+    document.getElementById('team-stats').innerHTML = `
+      <div class="stat-card">
+        <div class="stat-icon purple">👥</div>
+        <div class="stat-info">
+          <div class="stat-label">Total de Membros</div>
+          <div class="stat-value">${members.length}</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green">🟢</div>
+        <div class="stat-info">
+          <div class="stat-label">Online</div>
+          <div class="stat-value">${online}</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon red">🔴</div>
+        <div class="stat-info">
+          <div class="stat-label">Ocupados</div>
+          <div class="stat-value">${busy}</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon blue">⚫</div>
+        <div class="stat-info">
+          <div class="stat-label">Offline</div>
+          <div class="stat-value">${offline}</div>
+        </div>
+      </div>`;
+  }
+
+  function getFilteredMembers() {
+    let members = Storage.getMembers();
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      members = members.filter(m =>
+        m.name.toLowerCase().includes(q) ||
+        (m.role || '').toLowerCase().includes(q) ||
+        (m.email || '').toLowerCase().includes(q)
+      );
+    }
+    if (statusFilter) {
+      members = members.filter(m => m.status === statusFilter);
+    }
+    return members;
+  }
+
+  function renderMembers() {
+    const members = getFilteredMembers();
+    const grid = document.getElementById('members-grid');
+    const tasks = Storage.getTasks();
+
+    document.getElementById('member-count').textContent =
+      searchQuery ? `${members.length} resultado(s) para "${searchQuery}"` : `Todos os Membros (${members.length})`;
+
+    if (!members.length) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
+        <div class="empty-icon">👥</div>
+        <h3>Nenhum membro encontrado</h3>
+        <p>${searchQuery ? 'Tente outros termos de busca.' : 'Adicione membros à sua equipe!'}</p>
+        <button class="btn btn-primary" onclick="openMemberModal()">+ Adicionar Membro</button>
+      </div>`;
+      return;
+    }
+
+    const statusLabel = { online: '🟢 Online', busy: '🔴 Ocupado', offline: '⚫ Offline' };
+    const statusCls = { online: 'online', busy: 'busy', offline: 'offline' };
+
+    grid.innerHTML = members.map(m => {
+      const col = App.getAvatarColor(m.name);
+      const memberTasks = tasks.filter(t => t.assigneeId === m.id);
+      const doneTasks = memberTasks.filter(t => t.status === 'done').length;
+      const projects = Storage.getProjects().filter(p => (p.team || []).includes(m.id));
+      const highlighted = App.highlight(m.name, searchQuery);
+      const avatarHtml = m.avatar && m.avatar.startsWith('data:')
+        ? `<img src="${m.avatar}" style="width:100%;height:100%;object-fit:cover;"/>`
+        : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">${App.getInitials(m.name)}</div>`;
+
+      return `
+        <div class="member-card" onclick="openMemberDetail('${m.id}')">
+          <div class="member-avatar-lg" style="background:linear-gradient(135deg,${col},${col}cc);overflow:hidden;">
+            ${avatarHtml}
+          </div>
+          <div class="member-info">
+            <div class="member-name">${highlighted}</div>
+            <div class="member-role">${m.role || 'Membro da equipe'}</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${m.email || ''}</div>
+            <div class="member-stats">
+              <span class="member-stat">✅ ${doneTasks} tarefas</span>
+              <span class="member-stat">📁 ${projects.length} projetos</span>
+              <span class="member-stat" style="color:${m.status === 'online' ? 'var(--green)' : m.status === 'busy' ? 'var(--red)' : 'var(--text-muted)'};">${statusLabel[m.status] || '⚫ Offline'}</span>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;">
+            <button class="task-action-btn" onclick="event.stopPropagation();openMemberModal('${m.id}')" title="Editar">✏️</button>
+            <button class="task-action-btn" onclick="event.stopPropagation();deleteMember('${m.id}')" title="Remover">🗑</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // Modal membro
+  window.openMemberModal = function(id = null) {
+    const form = document.getElementById('form-member');
+    form.reset();
+    document.getElementById('member-edit-id').value = '';
+    document.getElementById('modal-member-title').textContent = '👤 Novo Membro';
+    document.getElementById('btn-delete-member').style.display = 'none';
+    document.getElementById('member-avatar-preview').textContent = '?';
+    document.getElementById('member-avatar-preview').style.background = 'linear-gradient(135deg,#6C63FF,#9C8FFF)';
+
+    if (id) {
+      const member = Storage.getMember(id);
+      if (!member) return;
+      document.getElementById('modal-member-title').textContent = '✏️ Editar Membro';
+      document.getElementById('member-edit-id').value = id;
+      document.getElementById('member-name').value = member.name;
+      document.getElementById('member-role').value = member.role || '';
+      document.getElementById('member-email').value = member.email || '';
+      document.getElementById('member-phone').value = member.phone || '';
+      document.getElementById('member-bio').value = member.bio || '';
+      document.getElementById('member-status').value = member.status || 'online';
+      document.getElementById('btn-delete-member').style.display = 'block';
+      updateAvatarPreview(member.name);
+    }
+
+    App.openModal('modal-member');
+  };
+
+  function updateAvatarPreview(name) {
+    const preview = document.getElementById('member-avatar-preview');
+    if (name) {
+      preview.textContent = App.getInitials(name);
+      const col = App.getAvatarColor(name);
+      preview.style.background = `linear-gradient(135deg,${col},${col}cc)`;
+    } else {
+      preview.textContent = '?';
+      preview.style.background = 'linear-gradient(135deg,#6C63FF,#9C8FFF)';
+    }
+  }
+
+  document.getElementById('member-name').addEventListener('input', e => {
+    updateAvatarPreview(e.target.value.trim());
+  });
+
+  // Upload de foto
+  let memberAvatarData = null;
+  document.getElementById('member-foto-input').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      memberAvatarData = event.target.result;
+      const img = document.getElementById('member-avatar-img');
+      const text = document.getElementById('member-avatar-text');
+      img.src = memberAvatarData;
+      img.style.display = 'block';
+      text.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById('btn-save-member').addEventListener('click', () => {
+    const name = document.getElementById('member-name').value.trim();
+    if (!name) { App.toast('Nome é obrigatório', 'error'); return; }
+
+    const editId = document.getElementById('member-edit-id').value;
+    const data = {
+      name,
+      role: document.getElementById('member-role').value.trim(),
+      email: document.getElementById('member-email').value.trim(),
+      phone: document.getElementById('member-phone').value.trim(),
+      bio: document.getElementById('member-bio').value.trim(),
+      status: document.getElementById('member-status').value,
+      initials: App.getInitials(name),
+      avatar: memberAvatarData || null
+    };
+
+    if (editId) {
+      Storage.updateMember(editId, data);
+      App.toast('Membro atualizado!', 'success');
+    } else {
+      Storage.addMember(data);
+      App.toast(`${name} adicionado à equipe!`, 'success');
+    }
+
+    memberAvatarData = null;
+    App.closeModal('modal-member');
+    renderAll();
+  });
+
+  document.getElementById('btn-delete-member').addEventListener('click', () => {
+    const id = document.getElementById('member-edit-id').value;
+    if (!id) return;
+    App.closeModal('modal-member');
+    deleteMember(id);
+  });
+
+  window.deleteMember = function(id) {
+    const member = Storage.getMember(id);
+    if (!member) return;
+    App.confirm(`Remover "${member.name}" da equipe?`, () => {
+      Storage.deleteMember(id);
+      App.toast(`${member.name} removido`, 'warning');
+      renderAll();
+    });
+  };
+
+  // Detalhes do membro
+  window.openMemberDetail = function(id) {
+    const member = Storage.getMember(id);
+    if (!member) return;
+
+    const col = App.getAvatarColor(member.name);
+    const tasks = Storage.getTasks().filter(t => t.assigneeId === id);
+    const doneTasks = tasks.filter(t => t.status === 'done');
+    const doingTasks = tasks.filter(t => t.status === 'doing');
+    const projects = Storage.getProjects().filter(p => (p.team || []).includes(id));
+    const pct = tasks.length ? Math.round((doneTasks.length / tasks.length) * 100) : 0;
+    const statusLabel = { online: '🟢 Online', busy: '🔴 Ocupado', offline: '⚫ Offline' };
+
+    document.getElementById('member-detail-content').innerHTML = `
+      <div style="display:flex;gap:24px;flex-wrap:wrap;">
+        <!-- Avatar e info básica -->
+        <div style="text-align:center;min-width:140px;">
+          <div style="width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,${col},${col}cc);display:flex;align-items:center;justify-content:center;color:#fff;font-size:36px;font-weight:700;margin:0 auto 12px;border:4px solid var(--primary-light);overflow:hidden;">
+            ${member.avatar && member.avatar.startsWith('data:') 
+              ? `<img src="${member.avatar}" style="width:100%;height:100%;object-fit:cover;"/>` 
+              : App.getInitials(member.name)}
+          </div>
+          <div style="font-size:16px;font-weight:700;">${member.name}</div>
+          <div style="font-size:12px;color:var(--text-secondary);">${member.role || 'Membro'}</div>
+          <div style="margin-top:8px;font-size:12px;">${statusLabel[member.status] || '⚫ Offline'}</div>
+          <button class="btn btn-outline btn-sm" style="margin-top:12px;" onclick="App.closeModal('modal-member-detail');openMemberModal('${member.id}')">✏️ Editar</button>
+        </div>
+
+        <!-- Stats e info -->
+        <div style="flex:1;min-width:200px;">
+          ${member.bio ? `<div style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;padding:12px;background:var(--bg);border-radius:10px;">"${member.bio}"</div>` : ''}
+          
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+            ${[
+              { icon: '✅', label: 'Tarefas Concluídas', value: doneTasks.length, color: 'var(--green)' },
+              { icon: '🔄', label: 'Em Andamento', value: doingTasks.length, color: 'var(--blue)' },
+              { icon: '📁', label: 'Projetos', value: projects.length, color: 'var(--primary)' },
+              { icon: '📊', label: 'Produtividade', value: pct + '%', color: 'var(--orange)' }
+            ].map(s => `
+              <div style="background:var(--bg);border-radius:10px;padding:12px;text-align:center;">
+                <div style="font-size:18px;">${s.icon}</div>
+                <div style="font-size:18px;font-weight:800;color:${s.color};">${s.value}</div>
+                <div style="font-size:10px;color:var(--text-muted);">${s.label}</div>
+              </div>`).join('')}
+          </div>
+
+          ${member.email || member.phone ? `
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            ${member.email ? `<div style="font-size:12px;color:var(--text-secondary);">📧 ${member.email}</div>` : ''}
+            ${member.phone ? `<div style="font-size:12px;color:var(--text-secondary);">📱 ${member.phone}</div>` : ''}
+          </div>` : ''}
+
+          ${projects.length ? `
+          <div style="margin-top:16px;">
+            <div style="font-size:13px;font-weight:600;margin-bottom:8px;">📁 Projetos (${projects.length})</div>
+            ${projects.map(p => `
+              <div style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--bg);border-radius:8px;margin-bottom:6px;cursor:pointer;" onclick="App.closeModal('modal-member-detail');location.href='projeto.html?id=${p.id}'">
+                <span>${p.icon || '📁'}</span>
+                <div>
+                  <div style="font-size:12px;font-weight:600;">${p.name}</div>
+                  <span class="status-badge ${App.statusInfo(p.status).cls}" style="font-size:10px;padding:2px 8px;">${App.statusInfo(p.status).label}</span>
+                </div>
+              </div>`).join('')}
+          </div>` : ''}
+        </div>
+      </div>`;
+
+    App.openModal('modal-member-detail');
+  };
+
+  // Filters
+  document.getElementById('search-members').addEventListener('input', e => {
+    searchQuery = e.target.value.trim();
+    renderMembers();
+  });
+
+  document.getElementById('filter-status-member').addEventListener('change', e => {
+    statusFilter = e.target.value;
+    renderMembers();
+  });
+
+  function renderAll() {
+    renderStats();
+    renderMembers();
+  }
+
+  renderAll();
+</script>
+</body>
+</html>

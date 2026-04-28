@@ -1,0 +1,35 @@
+# ==========================================
+# .htaccess - Configurações do servidor Apache
+# ==========================================
+
+# Ativar mod_rewrite
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+</IfModule>
+
+# Prevenir acesso direto a arquivos de configuração
+<FilesMatch "\.php$">
+    <IfModule mod_authz_core.c>
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Permitir acesso apenas aos scripts PHP necessários
+<FilesMatch "(login|cadastro)\.php$">
+    <IfModule mod_authz_core.c>
+        Allow from all
+    </IfModule>
+</FilesMatch>
+
+# Desabilitar listagem de diretórios
+<IfModule mod_autoindex.c>
+    Options -Indexes
+</IfModule>
+
+# Adicionar headers de segurança
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+</IfModule>

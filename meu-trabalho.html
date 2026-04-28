@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Flowtask – Meu Trabalho</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <script src="js/theme.js"></script>
+  <script src="js/auth.js"></script>
+  <style>
+    .my-work-container { max-width: 1000px; margin: 0 auto; }
+    .filter-bar { display: flex; gap: 12px; margin-bottom: 24px; }
+    .filter-btn { padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border); background: var(--white); color: var(--text-secondary); cursor: pointer; transition: all 0.3s ease; font-size: 13px; font-weight: 600; }
+    .filter-btn:hover, .filter-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .status-section { margin-bottom: 32px; }
+    .status-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--text-primary); display: flex; align-items: center; gap: 8px; }
+    .status-icon { font-size: 20px; }
+    .task-list { display: grid; gap: 12px; }
+    .task-card { background: var(--white); border-radius: var(--card-radius); padding: 16px; border: 1px solid var(--border); display: flex; gap: 16px; align-items: start; transition: all 0.3s ease; }
+    .task-card:hover { box-shadow: var(--shadow-md); border-color: var(--primary); }
+    .task-priority { width: 4px; height: 100%; background: var(--orange); border-radius: 4px; flex-shrink: 0; }
+    .task-priority.alta { background: var(--red); }
+    .task-priority.media { background: var(--orange); }
+    .task-priority.baixa { background: var(--blue); }
+    .task-info { flex: 1; min-width: 0; }
+    .task-name { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; cursor: pointer; transition: all 0.3s ease; }
+    .task-name:hover { color: var(--primary); }
+    .task-project { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
+    .task-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.4; }
+    .task-footer { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+    .task-priority-tag { font-size: 11px; padding: 3px 8px; border-radius: 6px; font-weight: 600; }
+    .task-priority-tag.alta { background: var(--red-light); color: var(--red); }
+    .task-priority-tag.media { background: var(--orange-light); color: var(--orange); }
+    .task-priority-tag.baixa { background: var(--blue-light); color: var(--blue); }
+    .task-assignee { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 11px; font-weight: 700; }
+    .empty-state { text-align: center; padding: 40px 20px; }
+    .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-title { font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
+    .empty-desc { font-size: 13px; color: var(--text-secondary); }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main-content">
+    <header class="topbar" id="topbar"></header>
+    <main class="page-content">
+      <div class="my-work-container">
+        <div class="section-header mb-4">
+          <div class="section-title">⭐ Meu Trabalho</div>
+        </div>
+
+        <div class="filter-bar">
+          <button class="filter-btn active" onclick="filterTasks('all')">Todos</button>
+          <button class="filter-btn" onclick="filterTasks('todo')">A Fazer</button>
+          <button class="filter-btn" onclick="filterTasks('doing')">Em Andamento</button>
+          <button class="filter-btn" onclick="filterTasks('done')">Concluído</button>
+        </div>
+
+        <div id="tasks-container"></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="js/storage.js"></script>
+<script src="js/app.js"></script>
+<script>
+  document.getElementById('sidebar').innerHTML = getSidebarHTML('meu-trabalho.html');
+  document.getElementById('topbar').innerHTML = getTopbarHTML('⭐ Meu Trabalho', 'Acompanhe suas tarefas atribuídas');
+  
+  // Aplicar tema se estava ativado
+  if (localStorage.getItem('ft_dark_mode') === '1') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+
+  let currentFilter = 'all';
+  const user = Storage.getUser();
+  const members = Storage.getMembers();
+
+  function renderMyTasks() {
+    const tasks = Storage.getTasks().filter(t => t.assigneeId === user.id || !t.assigneeId);
+    const container = document.getElementById('tasks-container');
+
+    if (!tasks.length) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">📭</div>
+          <div class="empty-title">Nenhuma tarefa atribuída</div>
+          <div class="empty-desc">Você não tem tarefas pendentes. Bom trabalho! 🎉</div>
+        </div>`;
+      return;
+    }
+
+    // Agrupar tarefas por status
+    const byStatus = {
+      todo: tasks.filter(t => t.status === 'todo'),
+      doing: tasks.filter(t => t.status === 'doing'),
+      done: tasks.filter(t => t.status === 'done')
+    };
+
+    let html = '';
+
+    // A Fazer
+    if (byStatus.todo.length || currentFilter === 'all' || currentFilter === 'todo') {
+      html += `
+        <div class="status-section" id="section-todo">
+          <div class="status-title">
+            <span class="status-icon">📋</span>
+            A Fazer (${byStatus.todo.length})
+          </div>
+          <div class="task-list">
+            ${byStatus.todo.length ? byStatus.todo.map(t => renderTaskCard(t)).join('') : '<div class="empty-state" style="padding:20px;"><p style="color:var(--text-muted);">Nenhuma tarefa</p></div>'}
+          </div>
+        </div>`;
+    }
+
+    // Em Andamento
+    if (byStatus.doing.length || currentFilter === 'all' || currentFilter === 'doing') {
+      html += `
+        <div class="status-section" id="section-doing">
+          <div class="status-title">
+            <span class="status-icon">🔄</span>
+            Em Andamento (${byStatus.doing.length})
+          </div>
+          <div class="task-list">
+            ${byStatus.doing.length ? byStatus.doing.map(t => renderTaskCard(t)).join('') : '<div class="empty-state" style="padding:20px;"><p style="color:var(--text-muted);">Nenhuma tarefa</p></div>'}
+          </div>
+        </div>`;
+    }
+
+    // Concluído
+    if (byStatus.done.length || currentFilter === 'all' || currentFilter === 'done') {
+      html += `
+        <div class="status-section" id="section-done">
+          <div class="status-title">
+            <span class="status-icon">✅</span>
+            Concluído (${byStatus.done.length})
+          </div>
+          <div class="task-list">
+            ${byStatus.done.length ? byStatus.done.map(t => renderTaskCard(t)).join('') : '<div class="empty-state" style="padding:20px;"><p style="color:var(--text-muted);">Nenhuma tarefa</p></div>'}
+          </div>
+        </div>`;
+    }
+
+    container.innerHTML = html || `
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <div class="empty-title">Nenhuma tarefa atribuída</div>
+        <div class="empty-desc">Você não tem tarefas pendentes. Bom trabalho! 🎉</div>
+      </div>`;
+  }
+
+  function renderTaskCard(task) {
+    const project = Storage.getProject(task.projectId);
+    const assignee = members.find(m => m.id === task.assigneeId);
+    const avatarColor = assignee ? App.getAvatarColor(assignee.name) : '#ccc';
+
+    return `
+      <div class="task-card">
+        <div class="task-priority ${task.priority || 'media'}"></div>
+        <div class="task-info">
+          <div class="task-name" onclick="location.href='projeto.html?id=${task.projectId}'">${task.name}</div>
+          <div class="task-project">${project ? project.name : 'Projeto desconhecido'}</div>
+          ${task.description ? `<div class="task-desc">${task.description}</div>` : ''}
+          <div class="task-footer">
+            <span class="task-priority-tag ${task.priority || 'media'}">${task.priority || 'média'}</span>
+            ${assignee ? `<div class="task-assignee" style="background:${avatarColor}" title="${assignee.name}">${App.getInitials(assignee.name)}</div>` : ''}
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function filterTasks(status) {
+    currentFilter = status;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    renderMyTasks();
+  }
+
+  renderMyTasks();
+  App.initSidebar();
+</script>
+</body>
+</html>

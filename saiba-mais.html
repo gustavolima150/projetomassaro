@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Flowtask – Saiba Mais</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <script src="js/theme.js"></script>
+  <script src="js/auth.js"></script>
+  <style>
+    .saiba-mais-container { max-width: 1000px; margin: 0 auto; }
+    .back-link { display: inline-flex; align-items: center; gap: 8px; color: var(--primary); font-size: 14px; font-weight: 600; margin-bottom: 24px; cursor: pointer; transition: all 0.3s ease; }
+    .back-link:hover { gap: 12px; }
+    .hero-section { background: linear-gradient(135deg, var(--primary-light), var(--bg)); border-radius: var(--card-radius); padding: 40px; text-align: center; margin-bottom: 40px; border: 1px solid var(--border); }
+    .hero-section h1 { font-size: 36px; font-weight: 800; margin-bottom: 12px; color: var(--text-primary); }
+    .hero-section p { font-size: 16px; color: var(--text-secondary); max-width: 600px; margin: 0 auto; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 40px; }
+    .feature-card { background: var(--white); border-radius: var(--card-radius); padding: 32px 24px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); transition: all 0.3s ease; }
+    .feature-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); border-color: var(--primary); }
+    .feature-icon { font-size: 36px; margin-bottom: 12px; }
+    .feature-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; color: var(--text-primary); }
+    .feature-desc { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+    .methodology-section { background: var(--white); border-radius: var(--card-radius); padding: 40px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); }
+    .methodology-section h2 { font-size: 24px; font-weight: 700; margin-bottom: 24px; color: var(--text-primary); }
+    .methodology-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; }
+    .method-item { text-align: center; }
+    .method-icon { font-size: 48px; margin-bottom: 12px; }
+    .method-name { font-size: 16px; font-weight: 700; margin-bottom: 8px; color: var(--text-primary); }
+    .method-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main-content">
+    <header class="topbar" id="topbar"></header>
+    <main class="page-content">
+      <div class="saiba-mais-container">
+        <a class="back-link" onclick="history.back()">← Voltar</a>
+
+        <div class="hero-section">
+          <h1>🚀 Flowtask</h1>
+          <p>A solução completa para gestão ágil de projetos. Organize tarefas, colabore com sua equipe e entregue resultados com metodologias comprovadas.</p>
+        </div>
+
+        <div class="feature-grid">
+          <div class="feature-card">
+            <div class="feature-icon">🎯</div>
+            <div class="feature-title">Objetivo do Sistema</div>
+            <div class="feature-desc">Flowtask foi desenvolvido para simplificar a gestão de projetos, permitindo que equipes trabalhem de forma mais ágil, colaborativa e eficiente, com ferramentas modernas e intuitivas.</div>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">⚡</div>
+            <div class="feature-title">Gestão Inteligente</div>
+            <div class="feature-desc">Monitore o progresso de seus projetos em tempo real, identifique gargalos, acompanhe prazos e tome decisões baseadas em dados precisos sobre o desempenho da equipe.</div>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">👥</div>
+            <div class="feature-title">Colaboração em Equipe</div>
+            <div class="feature-desc">Comunique-se efetivamente com sua equipe, atribua tarefas, adicione comentários, acompanhe atividades e trabalhe juntos para alcançar objetivos comuns.</div>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">📊</div>
+            <div class="feature-title">Produtividade</div>
+            <div class="feature-desc">Acompanhe a produtividade da equipe com métricas detalhadas, ranking de desempenho, análise de programação em pares e visualização clara de progresso.</div>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">🔄</div>
+            <div class="feature-title">Agilidade</div>
+            <div class="feature-desc">Adapte rapidamente suas estratégias, reprioritize tarefas, gerencie mudanças de escopo e mantenha a equipe alinhada com os objetivos em constante evolução.</div>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">💡</div>
+            <div class="feature-title">Inovação</div>
+            <div class="feature-desc">Integre metodologias ágeis modernas em seu workflow, experimente novas formas de trabalhar e otimize continuamente seus processos de desenvolvimento.</div>
+          </div>
+        </div>
+
+        <div class="methodology-section">
+          <h2>📚 Metodologias Suportadas</h2>
+          <div class="methodology-grid">
+            <div class="method-item">
+              <div class="method-icon">🎴</div>
+              <div class="method-name">Kanban</div>
+              <div class="method-desc">Visualize fluxo de trabalho com colunas dinâmicas. Mova tarefas de forma intuitiva, controle o WIP (Work In Progress) e melhore a vazão de trabalho.</div>
+            </div>
+            <div class="method-item">
+              <div class="method-icon">🏃</div>
+              <div class="method-name">Scrum</div>
+              <div class="method-desc">Organize trabalho em sprints, mantenha backlogs estruturados, acompanhe histórias de usuário e maximize a produtividade com ciclos iterativos.</div>
+            </div>
+            <div class="method-item">
+              <div class="method-icon">🤝</div>
+              <div class="method-name">Extreme Programming (XP)</div>
+              <div class="method-desc">Implemente práticas de qualidade como pair programming, testes contínuos, integração contínua e entrega frequente com excelência técnica.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="js/storage.js"></script>
+<script src="js/app.js"></script>
+<script>
+  document.getElementById('sidebar').innerHTML = getSidebarHTML('saiba-mais.html');
+  document.getElementById('topbar').innerHTML = getTopbarHTML('📚 Saiba Mais', 'Conheça o Flowtask e suas funcionalidades');
+  App.initSidebar();
+  
+  // Aplicar tema se estava ativado
+  if (localStorage.getItem('ft_dark_mode') === '1') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+</script>
+</body>
+</html>

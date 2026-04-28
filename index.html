@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Flowtask</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <script src="js/theme.js"></script>
+  <script src="js/auth.js"></script>
+  <style>
+    @keyframes progressSpin {
+      0% { background-position: 0 0; }
+      100% { background-position: 40px 40px; }
+    }
+    .progress-fill.full-rotation {
+      animation: progressSpin 2s linear infinite;
+      background: linear-gradient(
+        45deg,
+        #4CAF50 25%,
+        transparent 25%,
+        transparent 50%,
+        #4CAF50 50%,
+        #4CAF50 75%,
+        transparent 75%,
+        transparent
+      ) !important;
+      background-size: 40px 40px;
+    }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <!-- MAIN -->
+  <div class="main-content">
+    <header class="topbar" id="topbar"></header>
+
+    <main class="page-content" id="page-content">
+      <!-- Stats Grid -->
+      <div class="stats-grid" id="stats-grid"></div>
+
+      <!-- Meus Projetos -->
+      <div class="section-header mb-4">
+        <div>
+          <div class="section-title">📂 Meus Projetos</div>
+          <div class="text-sm text-muted mt-1">Clique em um projeto para ver detalhes</div>
+        </div>
+        <div class="flex gap-2">
+          <a href="projetos.html" class="link-btn">Ver todos os projetos →</a>
+          <button class="btn btn-primary" id="btn-novo-projeto">+ Novo Projeto</button>
+        </div>
+      </div>
+      <div class="projects-grid mb-6" id="projects-grid"></div>
+
+      <!-- Bottom grid: atividades + prazos + resumo -->
+      <div class="grid-3" id="bottom-grid"></div>
+    </main>
+  </div>
+</div>
+
+<!-- Hint Bar -->
+<div class="hint-bar" id="hint-bar">
+  <span>💡 <strong>Dica:</strong> Arraste e solte tarefas no quadro Kanban para atualizar o status de forma rápida e intuitiva.</span>
+  <div class="flex gap-3">
+    <a href="projeto.html" class="link-btn" style="color:rgba(255,255,255,0.8);">Ir para o Kanban →</a>
+    <button class="hint-close" id="hint-close">✕</button>
+  </div>
+</div>
+
+<!-- Modal Novo Projeto -->
+<div class="modal-overlay" id="modal-projeto">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title">🚀 Novo Projeto</div>
+      <button class="modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-projeto">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Nome do Projeto <span>*</span></label>
+            <input type="text" class="form-input" id="proj-nome" placeholder="Ex: Sistema de Gestão" required/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <select class="form-select" id="proj-status">
+              <option value="planejamento">🟡 Planejamento</option>
+              <option value="andamento">🔵 Em Andamento</option>
+              <option value="atraso">🔴 Em Atraso</option>
+              <option value="concluido">✅ Concluído</option>
+              <option value="pausado">⏸ Pausado</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Descrição</label>
+          <textarea class="form-textarea" id="proj-desc" placeholder="Descreva o objetivo do projeto..."></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Scrum Master</label>
+            <select class="form-select" id="proj-scrum"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Product Owner</label>
+            <select class="form-select" id="proj-po"></select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Prazo</label>
+            <input type="date" class="form-input" id="proj-prazo"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Ícone</label>
+            <select class="form-select" id="proj-icon">
+              <option value="⚡">⚡ Relâmpago</option>
+              <option value="🌐">🌐 Web</option>
+              <option value="📱">📱 Mobile</option>
+              <option value="📊">📊 Analytics</option>
+              <option value="🛒">🛒 E-commerce</option>
+              <option value="🔐">🔐 Segurança</option>
+              <option value="🤖">🤖 AI/ML</option>
+              <option value="🎨">🎨 Design</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Membros da Equipe</label>
+          <div id="proj-team-select" style="display:flex;flex-wrap:wrap;gap:8px;padding:10px;border:1.5px solid var(--border);border-radius:10px;min-height:50px;"></div>
+          <div class="form-hint">Clique nos membros para selecioná-los</div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="App.closeModal('modal-projeto')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-salvar-projeto">🚀 Criar Projeto</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/storage.js"></script>
+<script src="js/app.js"></script>
+<script>
+  // === INICIALIZAÇÃO ===
+  Storage.initDemoData();
+
+  // Sidebar
+  document.getElementById('sidebar').innerHTML = getSidebarHTML('index.html');
+
+  // Topbar
+  const user = Storage.getUser();
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
+  document.getElementById('topbar').innerHTML = getTopbarHTML(
+    `${greeting}, ${user.name}! 👋`,
+    'Bem-vindo de volta ao Flowtask. Veja o que está acontecendo hoje.'
+  );
+
+  // Aplicar tema se estava ativado
+  if (localStorage.getItem('ft_dark_mode') === '1') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+
+  // Stats
+  function renderStats() {
+    const projects = Storage.getProjects();
+    const ativos = projects.filter(p => p.status !== 'concluido' && p.status !== 'pausado').length;
+    const concluidos = projects.filter(p => p.status === 'concluido').length;
+    const andamento = projects.filter(p => p.status === 'andamento').length;
+    const atraso = projects.filter(p => p.status === 'atraso').length;
+
+    document.getElementById('stats-grid').innerHTML = `
+      <div class="stat-card">
+        <div class="stat-icon purple">📁</div>
+        <div class="stat-info">
+          <div class="stat-label">Projetos Ativos</div>
+          <div class="stat-value">${ativos}</div>
+          <div class="stat-sub">+2 este mês</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green">✅</div>
+        <div class="stat-info">
+          <div class="stat-label">Concluídos</div>
+          <div class="stat-value">${concluidos}</div>
+          <div class="stat-sub">+${concluidos} este mês</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon orange">🔄</div>
+        <div class="stat-info">
+          <div class="stat-label">Em Andamento</div>
+          <div class="stat-value">${andamento}</div>
+          <div class="stat-sub">${andamento > 0 ? andamento + ' próximos do prazo' : 'Nenhum em andamento'}</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon red">⚠️</div>
+        <div class="stat-info">
+          <div class="stat-label">Em Atraso</div>
+          <div class="stat-value">${atraso}</div>
+          <div class="stat-sub">${atraso > 0 ? 'Precisam de atenção' : 'Tudo em dia! 🎉'}</div>
+        </div>
+      </div>`;
+  }
+
+  // Projects grid
+  function renderProjects() {
+    const projects = Storage.getProjects();
+    const grid = document.getElementById('projects-grid');
+
+    if (!projects.length) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
+        <div class="empty-icon">📁</div>
+        <h3>Nenhum projeto ainda</h3>
+        <p>Crie seu primeiro projeto para começar!</p>
+        <button class="btn btn-primary" onclick="openNovoProjetoModal()">+ Criar Projeto</button>
+      </div>`;
+      return;
+    }
+
+    const members = Storage.getMembers();
+
+    grid.innerHTML = projects.slice(0, 6).map(p => {
+      const info = App.statusInfo(p.status);
+      const pColor = App.progressColor(p.progress);
+      const teamHtml = (p.team || []).slice(0, 3).map(mid => {
+        const m = members.find(mb => mb.id === mid);
+        if (!m) return '';
+        const col = App.getAvatarColor(m.name);
+        return `<div class="team-avatar" style="background:linear-gradient(135deg,${col},${col}cc)" title="${m.name}">${App.getInitials(m.name)}</div>`;
+      }).join('');
+      const extra = (p.team || []).length > 3 ? `<div class="team-avatar more">+${p.team.length - 3}</div>` : '';
+
+      return `
+        <div class="project-card" onclick="location.href='projeto.html?id=${p.id}'">
+          <div class="project-card-header">
+            <div class="project-icon">${p.icon || '📁'}</div>
+            <span class="project-fav" onclick="event.stopPropagation()">⭐</span>
+          </div>
+          <div class="project-name">${p.name}</div>
+          <div class="project-desc">${p.description || 'Sem descrição'}</div>
+          <div class="status-badge ${info.cls}" style="font-size:11px;">${info.label}</div>
+          <div class="team-avatars">${teamHtml}${extra}</div>
+          <div class="progress-section">
+            <div class="progress-header">
+              <span class="progress-label">Progresso</span>
+              <span class="progress-pct">${p.progress || 0}%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill ${pColor} ${p.progress >= 100 ? 'full-rotation' : ''}" style="width:${p.progress >= 100 ? '100' : p.progress || 0}%"></div>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // Bottom grid
+  function renderBottomGrid() {
+    const activities = Storage.getActivities();
+    const projects = Storage.getProjects();
+    const tasks = Storage.getTasks();
+    const doneTasks = tasks.filter(t => t.status === 'done').length;
+    const doingTasks = tasks.filter(t => t.status === 'doing').length;
+    const todoTasks = tasks.filter(t => t.status === 'todo').length;
+    const pct = tasks.length ? Math.round((doneTasks / tasks.length) * 100) : 0;
+
+    // Próximos prazos
+    const upcoming = projects
+      .filter(p => p.deadline)
+      .sort((a, b) => new Date(a.deadline) - new Date(b.deadline))
+      .slice(0, 4);
+
+    document.getElementById('bottom-grid').innerHTML = `
+      <!-- Atividades Recentes -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">⚡ Atividades Recentes</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" style="font-size:11px;">Todas ▼</button>
+        </div>
+        <div class="card-body">
+          ${activities.slice(0, 5).map(a => `
+            <div class="activity-item">
+              <div class="activity-avatar">${a.icon || '📌'}</div>
+              <div class="activity-info">
+                <div class="activity-text">${a.text}</div>
+                <div class="activity-meta">${a.meta || App.timeAgo(a.createdAt)}</div>
+              </div>
+            </div>`).join('') || '<div class="empty-state"><p>Nenhuma atividade ainda.</p></div>'}
+          <div style="margin-top:12px;">
+            <button class="link-btn">Ver todas as atividades →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Próximos Prazos -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">📅 Próximos Prazos</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" style="font-size:11px;">7 dias ▼</button>
+        </div>
+        <div class="card-body">
+          ${upcoming.map(p => {
+            const dl = App.formatDeadline(p.deadline);
+            return `
+            <div class="deadline-item">
+              <div class="deadline-icon-wrap">${p.icon || '📋'}</div>
+              <div class="deadline-info">
+                <div class="deadline-name">${p.name}</div>
+                <div class="deadline-project">${p.description || ''}</div>
+              </div>
+              <span class="deadline-date ${dl.class}">${dl.text}</span>
+            </div>`;
+          }).join('') || '<div class="empty-state"><p>Nenhum prazo próximo.</p></div>'}
+          <div style="margin-top:12px;">
+            <button class="link-btn">Ver calendário completo →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resumo Rápido -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">🛡 Resumo Rápido</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" style="font-size:11px;">Este mês ▼</button>
+        </div>
+        <div class="card-body">
+          <div style="display:flex;align-items:center;gap:20px;">
+            <div class="donut-wrap" style="position:relative;width:110px;height:110px;flex-shrink:0;">
+              ${App.donutChart(pct, 110, 12, '#6C63FF')}
+              <div class="donut-label">
+                <div class="donut-pct">${pct}%</div>
+                <div class="donut-sublabel">Produtividade</div>
+              </div>
+            </div>
+            <div style="flex:1;">
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                  <div style="font-size:12px;color:var(--text-secondary);">✅ Concluídas</div>
+                  <div style="font-size:16px;font-weight:800;color:var(--green);">${doneTasks}</div>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                  <div style="font-size:12px;color:var(--text-secondary);">🔄 Em andamento</div>
+                  <div style="font-size:16px;font-weight:800;color:var(--blue);">${doingTasks}</div>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                  <div style="font-size:12px;color:var(--text-secondary);">📋 Não iniciadas</div>
+                  <div style="font-size:16px;font-weight:800;color:var(--text-muted);">${todoTasks}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+            <a href="produtividade.html" class="btn btn-primary btn-sm w-full" style="justify-content:center;">
+              ⚡ Ver Produtividade Completa
+            </a>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  // Modal novo projeto
+  function openNovoProjetoModal() {
+    const members = Storage.getMembers();
+    const opts = '<option value="">Selecionar...</option>' + members.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+    document.getElementById('proj-scrum').innerHTML = opts;
+    document.getElementById('proj-po').innerHTML = opts;
+
+    // Team select
+    const teamDiv = document.getElementById('proj-team-select');
+    teamDiv.innerHTML = members.map(m => `
+      <div class="member-chip" data-id="${m.id}" onclick="toggleMember(this)"
+        style="display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--border);cursor:pointer;font-size:12px;transition:all 0.2s;background:var(--white);">
+        <div style="width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,${App.getAvatarColor(m.name)},${App.getAvatarColor(m.name)}cc);display:flex;align-items:center;justify-content:center;color:#fff;font-size:8px;font-weight:700;">${App.getInitials(m.name)}</div>
+        <span>${m.name}</span>
+      </div>`).join('');
+
+    App.openModal('modal-projeto');
+  }
+
+  window.toggleMember = function(el) {
+    el.classList.toggle('selected');
+    if (el.classList.contains('selected')) {
+      el.style.background = 'var(--primary-light)';
+      el.style.borderColor = 'var(--primary)';
+      el.style.color = 'var(--primary)';
+    } else {
+      el.style.background = 'var(--white)';
+      el.style.borderColor = 'var(--border)';
+      el.style.color = 'var(--text-primary)';
+    }
+  };
+
+  document.getElementById('btn-novo-projeto').addEventListener('click', openNovoProjetoModal);
+
+  document.getElementById('btn-salvar-projeto').addEventListener('click', () => {
+    const name = document.getElementById('proj-nome').value.trim();
+    if (!name) { App.toast('Nome do projeto é obrigatório', 'error'); return; }
+
+    const selectedTeam = Array.from(document.querySelectorAll('.member-chip.selected')).map(el => el.dataset.id);
+
+    const proj = Storage.addProject({
+      name,
+      description: document.getElementById('proj-desc').value.trim(),
+      status: document.getElementById('proj-status').value,
+      scrumMaster: document.getElementById('proj-scrum').value,
+      productOwner: document.getElementById('proj-po').value,
+      deadline: document.getElementById('proj-prazo').value,
+      icon: document.getElementById('proj-icon').value,
+      team: selectedTeam
+    });
+
+    App.closeModal('modal-projeto');
+    App.toast(`Projeto "${proj.name}" criado com sucesso!`, 'success');
+    renderAll();
+  });
+
+  App.initModal('modal-projeto');
+
+  function renderAll() {
+    renderStats();
+    renderProjects();
+    renderBottomGrid();
+  }
+
+  App.initHintBar();
+  App.initSidebar();
+  renderAll();
+
+  // Global search redirect
+  const gs = document.getElementById('global-search');
+  if (gs) {
+    gs.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && gs.value.trim()) {
+        location.href = `projetos.html?q=${encodeURIComponent(gs.value.trim())}`;
+      }
+    });
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cadastro – Flowtask</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <script src="js/theme.js"></script>
+</head>
+<body>
+<div class="auth-page">
+  <!-- Theme Toggle -->
+  <div class="theme-toggle-fixed">
+    <button id="theme-btn" class="theme-btn" title="Alternar tema">🌙</button>
+  </div>
+
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="auth-logo">
+          <div class="logo-icon">✓</div>
+          <div class="logo-text">Flowtask</div>
+        </div>
+        <h2>Criar nova conta</h2>
+        <p>Comece a gerenciar seus projetos agora mesmo</p>
+      </div>
+
+      <form id="cadastro-form" class="auth-form">
+        <div class="form-group">
+          <label class="form-label">Nome completo</label>
+          <input type="text" class="form-input" id="nome" placeholder="João Silva" required/>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" id="email" placeholder="seu@email.com" required/>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Senha</label>
+          <input type="password" class="form-input" id="senha" placeholder="••••••••" required/>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Confirmar senha</label>
+          <input type="password" class="form-input" id="confirmar-senha" placeholder="••••••••" required/>
+          <span class="form-hint" id="senha-hint"></span>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">Cadastrar</button>
+      </form>
+
+      <div class="auth-footer">
+        <p>Já tem conta? <a href="login.html" class="auth-link">Faça login aqui</a></p>
+      </div>
+
+      <div class="auth-divider">ou</div>
+
+      <a href="landing.html" class="btn btn-secondary btn-block">← Voltar</a>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Theme toggle
+  const themeBtn = document.getElementById('theme-btn');
+  themeBtn.textContent = Theme.getIcon();
+  themeBtn.addEventListener('click', () => {
+    Theme.toggle();
+    themeBtn.textContent = Theme.getIcon();
+  });
+
+  // Validar senhas em tempo real
+  const senhaInput = document.getElementById('senha');
+  const confirmarSenhaInput = document.getElementById('confirmar-senha');
+  const senhaHint = document.getElementById('senha-hint');
+
+  const validatePasswords = () => {
+    const senha = senhaInput.value;
+    const confirmacao = confirmarSenhaInput.value;
+
+    if (!confirmacao) {
+      senhaHint.textContent = '';
+      senhaHint.classList.remove('error', 'success');
+      return;
+    }
+
+    if (senha === confirmacao && senha.length >= 6) {
+      senhaHint.textContent = '✓ Senhas coincidem';
+      senhaHint.classList.remove('error');
+      senhaHint.classList.add('success');
+    } else if (senha !== confirmacao) {
+      senhaHint.textContent = '✗ Senhas não coincidem';
+      senhaHint.classList.remove('success');
+      senhaHint.classList.add('error');
+    } else if (senha.length < 6) {
+      senhaHint.textContent = '✗ Mínimo 6 caracteres';
+      senhaHint.classList.remove('success');
+      senhaHint.classList.add('error');
+    }
+  };
+
+  senhaInput.addEventListener('input', validatePasswords);
+  confirmarSenhaInput.addEventListener('input', validatePasswords);
+
+  // Form submission
+  const form = document.getElementById('cadastro-form');
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const nome = document.getElementById('nome').value;
+    const email = document.getElementById('email').value;
+    const senha = document.getElementById('senha').value;
+    const confirmarSenha = document.getElementById('confirmar-senha').value;
+
+    // Validações básicas
+    if (senha.length < 6) {
+      alert('Senha deve ter no mínimo 6 caracteres');
+      return;
+    }
+
+    if (senha !== confirmarSenha) {
+      alert('Senhas não coincidem');
+      return;
+    }
+
+    try {
+      // Chamar o novo backend Node.js
+      const response = await fetch('http://localhost:3001/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          full_name: nome, 
+          email, 
+          password: senha 
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Se teve sessão automática (autologin), ir direto para index
+        if (data.autologin && data.session) {
+          // Salvar session
+          localStorage.setItem('auth_token', data.session.access_token);
+          localStorage.setItem('user_id', data.user.id);
+          localStorage.setItem('user_name', data.user.name || data.user.email);
+          localStorage.setItem('user_email', data.user.email);
+          
+          alert('✓ Cadastro realizado com sucesso! Entrando no painel...');
+          window.location.href = 'index.html';
+        } else {
+          // Sem session automática, mas cadastro foi bem-sucedido
+          alert(data.message || '✓ Cadastro realizado! Você pode fazer login agora.');
+          window.location.href = 'login.html';
+        }
+      } else {
+        alert(data.message || 'Erro ao cadastrar. Email pode já estar em uso.');
+      }
+    } catch (error) {
+      console.error('Erro:', error);
+      alert('Erro ao cadastrar. Verifique se o servidor Node.js está rodando em http://localhost:3001');
+    }
+  });
+});
+</script>
+</body>
+</html>

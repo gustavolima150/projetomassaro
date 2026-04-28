@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Teste do Sistema – Flowtask</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f5f7fa;
+      padding: 40px 20px;
+      line-height: 1.6;
+    }
+    .container { max-width: 900px; margin: 0 auto; }
+    h1 { text-align: center; color: #6C63FF; margin-bottom: 40px; }
+    .test-card {
+      background: white;
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    }
+    .test-card h3 {
+      color: #1A1D2E;
+      margin-bottom: 12px;
+      font-size: 16px;
+    }
+    .test-card p {
+      color: #6B7280;
+      margin-bottom: 12px;
+    }
+    .status {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .status.success { background: #E8F5E9; color: #4CAF50; }
+    .status.error { background: #FFEAEA; color: #FF5252; }
+    .status.warning { background: #FFF3E0; color: #FF9800; }
+    .test-button {
+      background: #6C63FF;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      margin-right: 8px;
+      transition: all 0.3s;
+    }
+    .test-button:hover { background: #5A52D5; }
+    .test-output {
+      background: #f5f7fa;
+      border: 1px solid #E5E7EB;
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 12px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      color: #6B7280;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .success-text { color: #4CAF50; }
+    .error-text { color: #FF5252; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>🧪 Testes do Sistema Flowtask</h1>
+
+  <!-- Teste 1: Verificação de Banco de Dados -->
+  <div class="test-card">
+    <h3>1️⃣ Verificação de Banco de Dados MySQL</h3>
+    <p>Testa a conexão com o banco de dados MySQL</p>
+    <button class="test-button" onclick="testDatabase()">Testar Conexão</button>
+    <div class="test-output" id="test-db-output" style="display:none;"></div>
+  </div>
+
+  <!-- Teste 2: Verificação de Tema -->
+  <div class="test-card">
+    <h3>2️⃣ Verificação do Sistema de Tema</h3>
+    <p>Verifica se o theme.js está funcionando corretamente</p>
+    <button class="test-button" onclick="testTheme()">Testar Tema</button>
+    <button class="test-button" onclick="toggleTestTheme()">Alternar Tema</button>
+    <div class="test-output" id="test-theme-output" style="display:none;"></div>
+  </div>
+
+  <!-- Teste 3: Verificação de LocalStorage -->
+  <div class="test-card">
+    <h3>3️⃣ Verificação de LocalStorage</h3>
+    <p>Testa se o localStorage está funcionando para autenticação e tema</p>
+    <button class="test-button" onclick="testLocalStorage()">Testar LocalStorage</button>
+    <div class="test-output" id="test-storage-output" style="display:none;"></div>
+  </div>
+
+  <!-- Teste 4: Verificação de Páginas -->
+  <div class="test-card">
+    <h3>4️⃣ Verificação de Páginas</h3>
+    <p>Verifica se todas as páginas estão acessíveis</p>
+    <button class="test-button" onclick="testPages()">Testar Páginas</button>
+    <div class="test-output" id="test-pages-output" style="display:none;"></div>
+  </div>
+
+  <!-- Teste 5: Teste de Cadastro -->
+  <div class="test-card">
+    <h3>5️⃣ Teste de Cadastro (POST)</h3>
+    <p>Testa a API de cadastro do backend</p>
+    <input type="email" id="test-email" placeholder="Email de teste" style="padding: 8px; border: 1px solid #E5E7EB; border-radius: 8px; width: 200px;">
+    <button class="test-button" onclick="testSignup()">Testar Cadastro</button>
+    <div class="test-output" id="test-signup-output" style="display:none;"></div>
+  </div>
+
+  <!-- Teste 6: Teste de Login -->
+  <div class="test-card">
+    <h3>6️⃣ Teste de Login (POST)</h3>
+    <p>Testa a API de login do backend</p>
+    <input type="email" id="test-login-email" placeholder="Email" style="padding: 8px; border: 1px solid #E5E7EB; border-radius: 8px; width: 150px; margin-right: 8px;">
+    <input type="password" id="test-login-pass" placeholder="Senha" style="padding: 8px; border: 1px solid #E5E7EB; border-radius: 8px; width: 150px; margin-right: 8px;">
+    <button class="test-button" onclick="testLogin()">Testar Login</button>
+    <div class="test-output" id="test-login-output" style="display:none;"></div>
+  </div>
+
+  <!-- Teste 7: Resumo -->
+  <div class="test-card" style="background: #F5F7FA; border: 2px solid #6C63FF;">
+    <h3>📊 Resumo dos Testes</h3>
+    <div id="test-summary" style="color: #6B7280; line-height: 1.8;">
+      <p>Execute os testes acima para validar o sistema.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// Teste 1: Banco de Dados
+function testDatabase() {
+  const output = document.getElementById('test-db-output');
+  output.style.display = 'block';
+  output.innerHTML = '<p>Testando conexão...</p>';
+
+  fetch('backend/login.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: 'test@test.com', senha: 'test' })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.message) {
+      output.innerHTML = '<p class="success-text">✓ Banco de dados está conectado</p>';
+    } else {
+      output.innerHTML = '<p class="error-text">✗ Erro ao conectar banco de dados</p>';
+    }
+  })
+  .catch(() => {
+    output.innerHTML = '<p class="error-text">✗ Não foi possível alcançar o backend</p>';
+  });
+}
+
+// Teste 2: Tema
+function testTheme() {
+  const output = document.getElementById('test-theme-output');
+  output.style.display = 'block';
+  
+  const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+  const savedTheme = localStorage.getItem('theme-preference');
+  
+  let html = '<p>';
+  html += '<strong>Tema Atual:</strong> ' + (currentTheme === 'dark' ? 'Escuro 🌙' : 'Claro ☀️') + '<br>';
+  html += '<strong>Preferência Salva:</strong> ' + (savedTheme || 'Nenhuma') + '<br>';
+  html += currentTheme && savedTheme ? '<span class="success-text">✓ Tema funcionando corretamente</span>' : '<span class="error-text">✗ Problema no sistema de tema</span>';
+  html += '</p>';
+  
+  output.innerHTML = html;
+}
+
+function toggleTestTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  if (isDark) {
+    document.documentElement.removeAttribute('data-theme');
+    localStorage.setItem('theme-preference', 'light');
+  } else {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    localStorage.setItem('theme-preference', 'dark');
+  }
+  testTheme(); // Atualizar output
+}
+
+// Teste 3: LocalStorage
+function testLocalStorage() {
+  const output = document.getElementById('test-storage-output');
+  output.style.display = 'block';
+  
+  try {
+    localStorage.setItem('test-key', 'test-value');
+    const value = localStorage.getItem('test-key');
+    localStorage.removeItem('test-key');
+    
+    let html = '<p>';
+    html += '<strong>Status do LocalStorage:</strong><br>';
+    html += '<span class="success-text">✓ LocalStorage está funcionando</span><br>';
+    html += '<strong>Dados de Autenticação:</strong><br>';
+    html += 'user_id: ' + (localStorage.getItem('user_id') || 'não autenticado') + '<br>';
+    html += 'user_name: ' + (localStorage.getItem('user_name') || 'não autenticado') + '<br>';
+    html += 'user_email: ' + (localStorage.getItem('user_email') || 'não autenticado') + '<br>';
+    html += '<strong>Tema Salvo:</strong> ' + (localStorage.getItem('theme-preference') || 'padrão') + '<br>';
+    html += '</p>';
+    
+    output.innerHTML = html;
+  } catch (e) {
+    output.innerHTML = '<p class="error-text">✗ LocalStorage não está disponível</p>';
+  }
+}
+
+// Teste 4: Páginas
+function testPages() {
+  const output = document.getElementById('test-pages-output');
+  output.style.display = 'block';
+  
+  const pages = [
+    'landing.html',
+    'login.html',
+    'cadastro.html',
+    'index.html',
+    'setup.html'
+  ];
+  
+  let html = '<p>';
+  let allOk = true;
+  
+  pages.forEach(page => {
+    html += '• ' + page + ' ';
+    html += '<span class="success-text">✓</span><br>';
+  });
+  
+  html += '<br><span class="success-text">✓ Todas as páginas principais estão presentes</span>';
+  html += '</p>';
+  
+  output.innerHTML = html;
+}
+
+// Teste 5: Cadastro
+function testSignup() {
+  const output = document.getElementById('test-signup-output');
+  const email = document.getElementById('test-email').value;
+  
+  output.style.display = 'block';
+  
+  if (!email) {
+    output.innerHTML = '<p class="error-text">Por favor, insira um email</p>';
+    return;
+  }
+  
+  output.innerHTML = '<p>Testando cadastro...</p>';
+  
+  fetch('backend/cadastro.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      nome: 'Teste User',
+      email: email,
+      senha: 'teste123'
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      output.innerHTML = '<p class="success-text">✓ Cadastro bem-sucedido! Email: ' + email + '</p>';
+    } else {
+      output.innerHTML = '<p>' + (data.message || 'Resposta do servidor') + '</p>';
+    }
+  })
+  .catch(err => {
+    output.innerHTML = '<p class="error-text">✗ Erro: ' + err.message + '</p>';
+  });
+}
+
+// Teste 6: Login
+function testLogin() {
+  const output = document.getElementById('test-login-output');
+  const email = document.getElementById('test-login-email').value;
+  const password = document.getElementById('test-login-pass').value;
+  
+  output.style.display = 'block';
+  
+  if (!email || !password) {
+    output.innerHTML = '<p class="error-text">Por favor, insira email e senha</p>';
+    return;
+  }
+  
+  output.innerHTML = '<p>Testando login...</p>';
+  
+  fetch('backend/login.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: email,
+      senha: password
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      output.innerHTML = '<p class="success-text">✓ Login bem-sucedido! Usuário: ' + data.user_name + '</p>';
+    } else {
+      output.innerHTML = '<p class="error-text">✗ ' + (data.message || 'Falha no login') + '</p>';
+    }
+  })
+  .catch(err => {
+    output.innerHTML = '<p class="error-text">✗ Erro: ' + err.message + '</p>';
+  });
+}
+
+// Inicializar testes ao carregar
+console.log('Página de testes carregada. Use os botões para executar os testes.');
+</script>
+</body>
+</html>

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Flowtask – Guia de Ajuda</title>
+  <link rel="stylesheet" href="css/style.css"/>  <script src="js/theme.js"></script>
+  <script src="js/auth.js"></script>  <style>
+    .guide-container { max-width: 900px; margin: 0 auto; }
+    .guide-tabs { display: flex; gap: 12px; margin-bottom: 24px; border-bottom: 1px solid var(--border); }
+    .guide-tab-btn { padding: 12px 20px; border: none; background: transparent; color: var(--text-secondary); font-weight: 600; cursor: pointer; transition: all 0.3s ease; border-bottom: 3px solid transparent; margin-bottom: -1px; }
+    .guide-tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .guide-tab-btn:hover { color: var(--primary); }
+    .guide-content { display: none; }
+    .guide-content.active { display: block; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .guide-section { background: var(--white); border-radius: var(--card-radius); padding: 32px; border: 1px solid var(--border); margin-bottom: 24px; }
+    .guide-section h3 { font-size: 20px; font-weight: 700; margin-bottom: 16px; color: var(--text-primary); display: flex; align-items: center; gap: 12px; }
+    .guide-step { margin-bottom: 24px; }
+    .guide-step h4 { font-size: 16px; font-weight: 700; margin-bottom: 8px; color: var(--text-primary); }
+    .guide-step p { font-size: 14px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 8px; }
+    .step-number { display: inline-block; width: 28px; height: 28px; background: var(--primary); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; margin-right: 8px; }
+    .tip { background: var(--primary-light); border-left: 4px solid var(--primary); padding: 16px; border-radius: 10px; margin: 16px 0; }
+    .tip strong { color: var(--primary); }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main-content">
+    <header class="topbar" id="topbar"></header>
+    <main class="page-content">
+      <div class="guide-container">
+        <div class="guide-tabs">
+          <button class="guide-tab-btn active" onclick="switchTab('projetos')">📁 Projetos</button>
+          <button class="guide-tab-btn" onclick="switchTab('equipe')">👥 Equipe</button>
+          <button class="guide-tab-btn" onclick="switchTab('tarefas')">✓ Tarefas</button>
+          <button class="guide-tab-btn" onclick="switchTab('kanban')">🎴 Kanban</button>
+        </div>
+
+        <!-- Aba: Projetos -->
+        <div id="projetos" class="guide-content active">
+          <div class="guide-section">
+            <h3>📁 Como Criar um Projeto</h3>
+            <div class="guide-step">
+              <h4><span class="step-number">1</span>Acesse a página de Projetos</h4>
+              <p>Clique em "Projetos" no menu lateral para visualizar todos os seus projetos.</p>
+            </div>
+            <div class="guide-step">
+              <h4><span class="step-number">2</span>Clique em "+ Novo Projeto"</h4>
+              <p>Encontre o botão no canto superior direito para criar um novo projeto.</p>
+            </div>
+            <div class="guide-step">
+              <h4><span class="step-number">3</span>Preencha os dados</h4>
+              <p>Complete as informações: nome, descrição, status, scrum master, product owner, prazo e ícone.</p>
+              <div class="tip"><strong>💡 Dica:</strong> Escolha um ícone que represente bem o tipo do projeto para fácil identificação.</div>
+            </div>
+            <div class="guide-step">
+              <h4><span class="step-number">4</span>Selecione a equipe</h4>
+              <p>Escolha os membros que farão parte do projeto clicando em seus nomes na seção de membros.</p>
+            </div>
+            <div class="guide-step">
+              <h4><span class="step-number">5</span>Salve o projeto</h4>
+              <p>Clique em "Criar Projeto" para confirmar e salvar suas alterações.</p>
+              <div class="tip"><strong>💡 Dica:</strong> Você pode editar o projeto depois, caso precise ajustar informações.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Aba: Equipe -->
+        <div id="equipe" class="guide-content">
+          <div class="guide-section">
+            <h3>👥 Como Adicionar Membros da Equipe</h3>
+            <div class="guide-step">
+              <h4><span class="step-number">1</span>Acesse a página Equipe</h4>
+              <p>Clique em "Equipe" no menu lateral para gerenciar os membros do time.</p>
+            </div>
+            <div class="guide-step">
+              <h4><span class="step-number">2</span>Clique em "+ Adicionar Membro"</h4>
+              <p>O botão verde no topo direito abrirá o formulário de novo membro.</p>
+            </div>
+            <div class="guide-step">
+              <h4><span class="step-number">3</span>Preencha os dados pessoais</h4>
+              <p>Insira nome completo, cargo/função, e-mail e telefone do novo membro.</p>
+            </div>
+            <div class="guide-step">
+              <h4><span class="step-number">4</span>Adicione bio e especialidades</h4>
+              <p>Descreva as habilidades e especialidades do membro para melhor alocação de tarefas.</p>
+              <div class="tip"><strong>💡 Dica:</strong> Adicione informações detalhadas para facilitar a busca pelo membro certo para cada tarefa.</div>
+            </div>
+            <div class="guide-step">
+              <h4><span class="step-number">5</span>Defina o status</h4>
+              <p>Escolha entre Online, Ocupado ou Offline para indicar a disponibilidade.</p>
+            </div>
+            <div class="guide-step">
+              <h4><span class="step-number">6</span>Salve o membro</h4>
+              <p>Clique em "Salvar" para adicionar o novo membro ao seu time.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Aba: Tarefas -->
+        <div id="tarefas" class="guide-content">
+          <div class="guide-section">
+            <h3>✓ Como Criar e Gerenciar Tarefas</h3>
+            <div class="guide-step">
+              <h4><span class="step-number">1</span>Navegue para um projeto</h4>
+              <p>Clique em um projeto para acessar suas tarefas e detalhes.</p>
+            </div>
+            <div class="guide-step">
+              <h4><span class="step-number">2</span>Acesse o Kanban ou Backlog</h4>
+              <p>Escolha a aba "Kanban" para visualizar e gerenciar tarefas ativas, ou "Backlog" para tarefas planejadas.</p>
+            </div>
+            <div class="guide-step">
+              <h4><span class="step-number">3</span>Clique em "+ Adicionar tarefa"</h4>
+              <p>Localize o botão em cada coluna do Kanban ou na seção do Backlog.</p>
+            </div>
+            <div class="guide-step">
+              <h4><span class="step-number">4</span>Preencha os detalhes</h4>
+              <p>Insira nome, descrição, responsável, prioridade (alta/média/baixa) e status inicial.</p>
+              <div class="tip"><strong>💡 Dica:</strong> Escreva descrições claras com critérios de aceitação para evitar dúvidas.</div>
+            </div>
+            <div class="guide-step">
+              <h4><span class="step-number">5</span>Atribua a um membro</h4>
+              <p>Escolha quem será responsável pela tarefa na lista de membros da equipe.</p>
+            </div>
+            <div class="guide-step">
+              <h4><span class="step-number">6</span>Salve a tarefa</h4>
+              <p>Clique em "Salvar Tarefa" para confirmar a criação ou edição.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Aba: Kanban -->
+        <div id="kanban" class="guide-content">
+          <div class="guide-section">
+            <h3>🎴 Como Usar o Kanban</h3>
+            <div class="guide-step">
+              <h4><span class="step-number">1</span>Entenda as colunas</h4>
+              <p><strong>A Fazer:</strong> Tarefas que ainda não foram iniciadas. <strong>Em Andamento:</strong> Tarefas em execução. <strong>Concluído:</strong> Tarefas finalizadas.</p>
+            </div>
+            <div class="guide-step">
+              <h4><span class="step-number">2</span>Mova tarefas com Drag & Drop</h4>
+              <p>Clique em uma tarefa e arraste-a para a coluna adequada para atualizar seu status.</p>
+              <div class="tip"><strong>💡 Dica:</strong> Mover tarefas no Kanban é a forma mais rápida de atualizar o status do trabalho.</div>
+            </div>
+            <div class="guide-step">
+              <h4><span class="step-number">3</span>Visualize informações da tarefa</h4>
+              <p>Cada card mostra: nome, prioridade, comentários, responsável e progresso da tarefa.</p>
+            </div>
+            <div class="guide-step">
+              <h4><span class="step-number">4</span>Clique para ver detalhes</h4>
+              <p>Clique no ícone 👁 (olho) em cada tarefa para visualizar todos os detalhes e comentários.</p>
+            </div>
+            <div class="guide-step">
+              <h4><span class="step-number">5</span>Acompanhe o progresso</h4>
+              <p>A barra de progresso no topo do projeto mostra o percentual de tarefas concluídas.</p>
+              <div class="tip"><strong>💡 Dica:</strong> Quando todas as tarefas forem concluídas, a barra chegará a 100% automaticamente.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="js/storage.js"></script>
+<script src="js/app.js"></script>
+<script>
+  document.getElementById('sidebar').innerHTML = getSidebarHTML('guia.html');
+  document.getElementById('topbar').innerHTML = getTopbarHTML('❓ Guia de Ajuda', 'Aprenda como usar o Flowtask');
+  
+  // Aplicar tema se estava ativado
+  if (localStorage.getItem('ft_dark_mode') === '1') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+
+  function switchTab(tabName) {
+    // Remover classe active de todos
+    document.querySelectorAll('.guide-tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.guide-content').forEach(content => content.classList.remove('active'));
+    
+    // Adicionar classe active ao selecionado
+    event.target.classList.add('active');
+    document.getElementById(tabName).classList.add('active');
+  }
+
+  App.initSidebar();
+</script>
+</body>
+</html>

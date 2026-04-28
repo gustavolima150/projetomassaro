@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Flowtask – Projeto</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <script src="js/theme.js"></script>
+  <script src="js/auth.js"></script>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main-content">
+    <header class="topbar" id="topbar"></header>
+    <main class="page-content" id="project-main">
+      <!-- Conteúdo dinâmico do projeto -->
+    </main>
+  </div>
+</div>
+
+<!-- Modal Tarefa (Kanban/Backlog) -->
+<div class="modal-overlay" id="modal-task">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-task-title">Nova Tarefa</div>
+      <button class="modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-task">
+        <div class="form-group">
+          <label class="form-label">Nome da Tarefa <span>*</span></label>
+          <input type="text" class="form-input" id="task-name" placeholder="Ex: Implementar autenticação..." required/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Descrição</label>
+          <textarea class="form-textarea" id="task-desc" placeholder="Descreva os critérios de aceitação..." style="min-height:80px;"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Responsável</label>
+            <select class="form-select" id="task-assignee">
+              <option value="">Selecionar responsável...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Prioridade</label>
+            <select class="form-select" id="task-priority">
+              <option value="baixa">🟢 Baixa</option>
+              <option value="media" selected>🟡 Média</option>
+              <option value="alta">🔴 Alta</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-select" id="task-status">
+            <option value="todo">📋 A Fazer</option>
+            <option value="doing">🔄 Em Andamento</option>
+            <option value="done">✅ Concluído</option>
+          </select>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="App.closeModal('modal-task')">Cancelar</button>
+      <button class="btn btn-primary" onclick="document.getElementById('form-task').dispatchEvent(new Event('submit'))">💾 Salvar Tarefa</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Detalhe da Tarefa -->
+<div class="modal-overlay" id="modal-task-detail">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📋 Detalhe da Tarefa</div>
+      <button class="modal-close">✕</button>
+    </div>
+    <div class="modal-body" id="task-detail-content">
+    </div>
+  </div>
+</div>
+
+<!-- Modal Editar Projeto -->
+<div class="modal-overlay" id="modal-edit-proj">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title">✏️ Editar Projeto</div>
+      <button class="modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-edit-proj">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Nome <span>*</span></label>
+            <input type="text" class="form-input" id="ep-nome" required/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <select class="form-select" id="ep-status">
+              <option value="planejamento">🟡 Planejamento</option>
+              <option value="andamento">🔵 Em Andamento</option>
+              <option value="atraso">🔴 Em Atraso</option>
+              <option value="concluido">✅ Concluído</option>
+              <option value="pausado">⏸ Pausado</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Descrição</label>
+          <textarea class="form-textarea" id="ep-desc"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Prazo</label>
+          <input type="date" class="form-input" id="ep-prazo"/>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="App.closeModal('modal-edit-proj')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-save-edit-proj">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/storage.js"></script>
+<script src="js/app.js"></script>
+<script src="js/kanban.js"></script>
+<script>
+  Storage.initDemoData();
+  document.getElementById('sidebar').innerHTML = getSidebarHTML('projeto.html');
+
+  const projectId = App.getQueryParam('id');
+  let project = projectId ? Storage.getProject(projectId) : Storage.getProjects()[0];
+
+  if (!project) {
+    document.getElementById('project-main').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">😕</div>
+        <h3>Projeto não encontrado</h3>
+        <p>O projeto solicitado não existe ou foi excluído.</p>
+        <a href="projetos.html" class="btn btn-primary">← Voltar para Projetos</a>
+      </div>`;
+    document.getElementById('topbar').innerHTML = getTopbarHTML('Projeto', '');
+  } else {
+    renderProjectPage(project);
+  }
+
+  function renderProjectPage(proj) {
+    document.title = `ProManage – ${proj.name}`;
+    const members = Storage.getMembers();
+    const info = App.statusInfo(proj.status);
+    const dl = App.formatDeadline(proj.deadline);
+    const tasks = Storage.getKanbanTasks(proj.id);
+    const done = tasks.filter(t => t.status === 'done').length;
+    const pct = proj.progress || 0;
+    const pColor = App.progressColor(pct);
+
+    document.getElementById('topbar').innerHTML = `
+      <div class="topbar-left">
+        <div class="breadcrumb">
+          <a href="index.html">🏠 Início</a> / 
+          <a href="projetos.html">📁 Projetos</a> / 
+          <span>${proj.name}</span>
+        </div>
+        <h1 style="font-size:18px;">${proj.icon || '📁'} ${proj.name}</h1>
+      </div>
+      <div class="flex gap-2">
+        <button class="btn btn-outline btn-sm" onclick="openEditProj()">✏️ Editar</button>
+        <button class="btn btn-primary btn-sm" id="btn-add-task-header" onclick="Kanban.openAddTask('todo')">+ Nova Tarefa</button>
+      </div>
+    `;
+
+    const teamHtml = (proj.team || []).map(mid => {
+      const m = members.find(mb => mb.id === mid);
+      if (!m) return '';
+      const col = App.getAvatarColor(m.name);
+      return `<div class="team-avatar" style="width:32px;height:32px;font-size:11px;background:linear-gradient(135deg,${col},${col}cc)" title="${m.name}">${App.getInitials(m.name)}</div>`;
+    }).join('');
+
+    const scrumMaster = members.find(m => m.id === proj.scrumMaster);
+    const productOwner = members.find(m => m.id === proj.productOwner);
+
+    document.getElementById('project-main').innerHTML = `
+      <!-- Project Header Card -->
+      <div class="project-detail-header mb-6">
+        <div class="project-detail-icon">${proj.icon || '📁'}</div>
+        <div class="project-detail-info flex-1">
+          <div class="flex items-center gap-2 mb-1">
+            <div class="project-detail-name">${proj.name}</div>
+            <span class="status-badge ${info.cls}" style="font-size:11px;">${info.label}</span>
+          </div>
+          <div class="project-detail-desc">${proj.description || 'Sem descrição.'}</div>
+          <div class="flex gap-3" style="flex-wrap:wrap;">
+            ${scrumMaster ? `<span style="font-size:12px;color:var(--text-muted);">🏃 SM: <strong>${scrumMaster.name}</strong></span>` : ''}
+            ${productOwner ? `<span style="font-size:12px;color:var(--text-muted);">👤 PO: <strong>${productOwner.name}</strong></span>` : ''}
+            <span style="font-size:12px;color:var(--text-muted);">📅 Prazo: <span class="deadline-date ${dl.class}" style="font-size:11px;">${dl.text}</span></span>
+            <span style="font-size:12px;color:var(--text-muted);">✅ ${done}/${tasks.length} tarefas</span>
+          </div>
+        </div>
+        <div style="text-align:center;min-width:120px;">
+          <div style="position:relative;width:100px;height:100px;margin:0 auto;">
+            ${App.donutChart(pct, 100, 10, pct >= 100 ? '#4CAF50' : '#6C63FF')}
+            <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+              <div style="font-size:18px;font-weight:800;">${pct}%</div>
+              <div style="font-size:9px;color:var(--text-muted);">Progresso</div>
+            </div>
+          </div>
+        </div>
+        <div class="team-avatars">${teamHtml}</div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs mb-6" id="project-tabs">
+        <button class="tab-btn active" data-tab="tab-kanban">📋 Kanban</button>
+        <button class="tab-btn" data-tab="tab-backlog">🗃 Backlog</button>
+        <button class="tab-btn" data-tab="tab-equipe">👥 Equipe</button>
+        <button class="tab-btn" data-tab="tab-info">ℹ️ Info</button>
+      </div>
+
+      <!-- Kanban Tab -->
+      <div class="tab-content active" id="tab-kanban">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <div style="font-size:14px;font-weight:600;color:var(--text-secondary);">
+            Arraste os cards entre colunas para atualizar o status
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="Kanban.openAddTask('todo')">+ Adicionar Tarefa</button>
+        </div>
+        <div class="kanban-board" id="kanban-board"></div>
+      </div>
+
+      <!-- Backlog Tab -->
+      <div class="tab-content" id="tab-backlog">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+          <div>
+            <div style="font-size:15px;font-weight:700;">🗃 Backlog do Produto</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Tarefas aguardando entrada no Kanban</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openAddBacklogTask()">+ Adicionar ao Backlog</button>
+        </div>
+        <div id="backlog-list"></div>
+      </div>
+
+      <!-- Equipe Tab -->
+      <div class="tab-content" id="tab-equipe">
+        <div style="margin-bottom:20px;">
+          <div style="font-size:15px;font-weight:700;margin-bottom:16px;">👥 Membros do Projeto</div>
+          <div id="proj-team-list"></div>
+        </div>
+      </div>
+
+      <!-- Info Tab -->
+      <div class="tab-content" id="tab-info">
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header"><div class="card-title">📊 Métricas</div></div>
+            <div class="card-body" id="proj-metrics"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">⚡ Atividade Recente</div></div>
+            <div class="card-body" id="proj-activity"></div>
+          </div>
+        </div>
+      </div>`;
+
+    // Inicializar tabs
+    App.initTabs('#project-tabs');
+
+    // Inicializar Kanban
+    Kanban.init(proj.id);
+
+    // Renderizar backlog
+    renderBacklog(proj.id);
+
+    // Renderizar equipe
+    renderTeamTab(proj);
+
+    // Renderizar info
+    renderInfoTab(proj);
+  }
+
+  function renderBacklog(projId) {
+    const tasks = Storage.getBacklogTasks(projId);
+    const members = Storage.getMembers();
+    const list = document.getElementById('backlog-list');
+    if (!list) return;
+
+    if (!tasks.length) {
+      list.innerHTML = `<div class="empty-state">
+        <div class="empty-icon">🗃</div>
+        <h3>Backlog vazio</h3>
+        <p>Adicione tarefas ao backlog antes de enviá-las ao Kanban.</p>
+        <button class="btn btn-primary" onclick="openAddBacklogTask()">+ Adicionar Tarefa</button>
+      </div>`;
+      return;
+    }
+
+    list.innerHTML = tasks.map(t => {
+      const assignee = members.find(m => m.id === t.assigneeId);
+      const col = assignee ? App.getAvatarColor(assignee.name) : '#6C63FF';
+      return `
+        <div class="backlog-item" data-id="${t.id}">
+          <span class="backlog-drag-handle">⋮⋮</span>
+          <div class="backlog-info flex-1">
+            <div class="backlog-name">${t.name}</div>
+            <div class="backlog-meta">${t.description ? t.description.substring(0,60) + '...' : 'Sem descrição'} • Prioridade: ${t.priority || 'média'}</div>
+          </div>
+          ${assignee ? `<div class="team-avatar" style="width:28px;height:28px;font-size:10px;background:linear-gradient(135deg,${col},${col}cc)" title="${assignee.name}">${App.getInitials(assignee.name)}</div>` : ''}
+          <span class="priority-tag ${t.priority || 'media'}">${t.priority || 'média'}</span>
+          <button class="btn btn-primary btn-xs" onclick="sendToKanban('${t.id}')">→ Kanban</button>
+          <button class="btn btn-danger btn-xs" onclick="deleteBacklogTask('${t.id}')">🗑</button>
+        </div>`;
+    }).join('');
+  }
+
+  function renderTeamTab(proj) {
+    const members = Storage.getMembers();
+    const list = document.getElementById('proj-team-list');
+    if (!list) return;
+
+    const projMembers = (proj.team || []).map(id => members.find(m => m.id === id)).filter(Boolean);
+
+    if (!projMembers.length) {
+      list.innerHTML = `<div class="empty-state"><p>Nenhum membro neste projeto.</p><a href="equipe.html" class="btn btn-primary">Gerenciar Equipe</a></div>`;
+      return;
+    }
+
+    const tasksByMember = {};
+    const tasks = Storage.getTasksByProject(proj.id);
+    tasks.forEach(t => {
+      if (!tasksByMember[t.assigneeId]) tasksByMember[t.assigneeId] = { total: 0, done: 0 };
+      tasksByMember[t.assigneeId].total++;
+      if (t.status === 'done') tasksByMember[t.assigneeId].done++;
+    });
+
+    list.innerHTML = `<div class="grid-2">` + projMembers.map(m => {
+      const col = App.getAvatarColor(m.name);
+      const stats = tasksByMember[m.id] || { total: 0, done: 0 };
+      const statusDot = { online: '🟢', offline: '⚫', busy: '🔴' }[m.status] || '⚫';
+      return `
+        <div class="member-card" onclick="location.href='equipe.html'">
+          <div class="member-avatar-lg" style="background:linear-gradient(135deg,${col},${col}cc);">${App.getInitials(m.name)}</div>
+          <div class="member-info">
+            <div class="member-name">${statusDot} ${m.name}</div>
+            <div class="member-role">${m.role || 'Membro'}</div>
+            <div class="member-stats">
+              <span class="member-stat">✅ ${stats.done} concluídas</span>
+              <span class="member-stat">📋 ${stats.total} total</span>
+            </div>
+          </div>
+        </div>`;
+    }).join('') + `</div>`;
+  }
+
+  function renderInfoTab(proj) {
+    const tasks = Storage.getTasksByProject(proj.id);
+    const kanbanTasks = tasks.filter(t => t.inKanban);
+    const backlogTasks = tasks.filter(t => !t.inKanban);
+    const done = kanbanTasks.filter(t => t.status === 'done').length;
+    const doing = kanbanTasks.filter(t => t.status === 'doing').length;
+    const todo = kanbanTasks.filter(t => t.status === 'todo').length;
+    const alta = tasks.filter(t => t.priority === 'alta').length;
+
+    const metrics = document.getElementById('proj-metrics');
+    if (metrics) {
+      metrics.innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          ${[
+            { icon: '✅', label: 'Concluídas', value: done, color: 'var(--green)' },
+            { icon: '🔄', label: 'Em Andamento', value: doing, color: 'var(--blue)' },
+            { icon: '📋', label: 'A Fazer', value: todo, color: 'var(--text-muted)' },
+            { icon: '🗃', label: 'No Backlog', value: backlogTasks.length, color: 'var(--orange)' },
+            { icon: '🔴', label: 'Prioridade Alta', value: alta, color: 'var(--red)' },
+            { icon: '📊', label: 'Total de Tarefas', value: tasks.length, color: 'var(--primary)' }
+          ].map(s => `
+            <div style="background:var(--bg);border-radius:10px;padding:12px;text-align:center;">
+              <div style="font-size:20px;">${s.icon}</div>
+              <div style="font-size:20px;font-weight:800;color:${s.color};">${s.value}</div>
+              <div style="font-size:11px;color:var(--text-muted);">${s.label}</div>
+            </div>`).join('')}
+        </div>`;
+    }
+
+    const activity = document.getElementById('proj-activity');
+    if (activity) {
+      const acts = Storage.getActivities().slice(0, 5);
+      activity.innerHTML = acts.map(a => `
+        <div class="activity-item">
+          <div class="activity-avatar" style="font-size:14px;">${a.icon || '📌'}</div>
+          <div class="activity-info">
+            <div class="activity-text">${a.text}</div>
+            <div class="activity-meta">${App.timeAgo(a.createdAt)}</div>
+          </div>
+        </div>`).join('') || '<p style="font-size:12px;color:var(--text-muted);">Sem atividade recente.</p>';
+    }
+  }
+
+  // Enviar para Kanban
+  window.sendToKanban = function(taskId) {
+    Storage.updateTask(taskId, { inKanban: true, status: 'todo' });
+    App.toast('Tarefa enviada para o Kanban!', 'success');
+    renderBacklog(project.id);
+    Kanban.render();
+    Kanban.updateProgress();
+  };
+
+  window.deleteBacklogTask = function(taskId) {
+    App.confirm('Excluir esta tarefa?', () => {
+      Storage.deleteTask(taskId);
+      App.toast('Tarefa excluída', 'warning');
+      renderBacklog(project.id);
+    });
+  };
+
+  // Adicionar ao backlog
+  window.openAddBacklogTask = function() {
+    const form = document.getElementById('form-task');
+    if (form) {
+      form.reset();
+      form.dataset.taskId = '';
+      form.dataset.isBacklog = 'true';
+    }
+    document.getElementById('modal-task-title').textContent = 'Nova Tarefa (Backlog)';
+    document.getElementById('task-status').value = 'todo';
+
+    const select = document.getElementById('task-assignee');
+    const members = Storage.getMembers();
+    select.innerHTML = '<option value="">Selecionar responsável...</option>' +
+      members.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+
+    App.openModal('modal-task');
+  };
+
+  // Override form submit para suportar backlog
+  const origSaveTask = Kanban.saveTask.bind(Kanban);
+  Kanban.saveTask = function(form) {
+    const isBacklog = form.dataset.isBacklog === 'true';
+    const taskId = form.dataset.taskId;
+    const data = {
+      name: document.getElementById('task-name').value.trim(),
+      description: document.getElementById('task-desc').value.trim(),
+      assigneeId: document.getElementById('task-assignee').value,
+      priority: document.getElementById('task-priority').value,
+      status: document.getElementById('task-status').value,
+      projectId: this.projectId,
+      inKanban: !isBacklog
+    };
+
+    if (!data.name) { App.toast('Nome da tarefa é obrigatório', 'error'); return; }
+
+    if (taskId) {
+      Storage.updateTask(taskId, data);
+      App.toast('Tarefa atualizada!', 'success');
+    } else {
+      Storage.addTask(data);
+      App.toast('Tarefa criada!', 'success');
+    }
+
+    form.dataset.isBacklog = '';
+    App.closeModal('modal-task');
+
+    if (data.inKanban) {
+      this.render();
+      this.updateProgress();
+    } else {
+      renderBacklog(this.projectId);
+    }
+  };
+
+  // Editar projeto
+  window.openEditProj = function() {
+    if (!project) return;
+    document.getElementById('ep-nome').value = project.name;
+    document.getElementById('ep-desc').value = project.description || '';
+    document.getElementById('ep-status').value = project.status;
+    document.getElementById('ep-prazo').value = project.deadline || '';
+    App.initModal('modal-edit-proj');
+    App.openModal('modal-edit-proj');
+  };
+
+  document.getElementById('btn-save-edit-proj').addEventListener('click', () => {
+    const name = document.getElementById('ep-nome').value.trim();
+    if (!name || !project) return;
+    const updated = Storage.updateProject(project.id, {
+      name,
+      description: document.getElementById('ep-desc').value.trim(),
+      status: document.getElementById('ep-status').value,
+      deadline: document.getElementById('ep-prazo').value
+    });
+    project = updated;
+    App.closeModal('modal-edit-proj');
+    App.toast('Projeto atualizado!', 'success');
+    renderProjectPage(project);
+    Kanban.init(project.id);
+  });
+</script>
+</body>
+</html>

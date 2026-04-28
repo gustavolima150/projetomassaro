@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Flowtask – Notificações</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <script src="js/theme.js"></script>
+  <script src="js/auth.js"></script>
+  <style>
+    .notif-container { max-width: 700px; margin: 0 auto; }
+    .notif-filter { display: flex; gap: 12px; margin-bottom: 24px; }
+    .notif-filter button { padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border); background: var(--white); color: var(--text-secondary); cursor: pointer; transition: all 0.3s ease; font-size: 13px; font-weight: 600; }
+    .notif-filter button:hover, .notif-filter button.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .notification-item { background: var(--white); border-radius: var(--card-radius); padding: 16px; margin-bottom: 12px; border-left: 4px solid var(--primary); border: 1px solid var(--border); display: flex; gap: 16px; align-items: start; transition: all 0.3s ease; }
+    .notification-item:hover { box-shadow: var(--shadow-md); transform: translateX(2px); }
+    .notification-icon { font-size: 24px; flex-shrink: 0; }
+    .notification-content { flex: 1; }
+    .notification-title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+    .notification-desc { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; }
+    .notification-time { font-size: 12px; color: var(--text-muted); }
+    .notification-action { padding-left: 16px; }
+    .notif-btn { font-size: 12px; padding: 4px 8px; border-radius: 6px; border: none; background: var(--primary-light); color: var(--primary); cursor: pointer; transition: all 0.3s ease; }
+    .notif-btn:hover { background: var(--primary); color: #fff; }
+    .empty-state { text-align: center; padding: 60px 20px; }
+    .empty-icon { font-size: 64px; margin-bottom: 16px; }
+    .empty-title { font-size: 18px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
+    .empty-desc { color: var(--text-secondary); }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main-content">
+    <header class="topbar" id="topbar"></header>
+    <main class="page-content">
+      <div class="notif-container">
+        <div class="section-header mb-4" style="display:flex;justify-content:space-between;align-items:center;">
+          <div class="section-title">🔔 Notificações</div>
+          <button class="link-btn" onclick="clearAllNotifications()" style="font-size:12px;">Limpar tudo</button>
+        </div>
+
+        <div class="notif-filter">
+          <button class="active" onclick="filterNotifications('all')">Todas</button>
+          <button onclick="filterNotifications('project')">Projetos</button>
+          <button onclick="filterNotifications('task')">Tarefas</button>
+          <button onclick="filterNotifications('team')">Equipe</button>
+        </div>
+
+        <div id="notifications-list"></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="js/storage.js"></script>
+<script src="js/app.js"></script>
+<script>
+  document.getElementById('sidebar').innerHTML = getSidebarHTML('notificacoes.html');
+  document.getElementById('topbar').innerHTML = getTopbarHTML('🔔 Notificações', 'Acompanhe todas as atividades do sistema');
+  
+  // Aplicar tema se estava ativado
+  if (localStorage.getItem('ft_dark_mode') === '1') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+
+  let currentFilter = 'all';
+
+  function renderNotifications() {
+    // Usar atividades como notificações por enquanto
+    const activities = Storage.getActivities();
+    const notifList = document.getElementById('notifications-list');
+
+    let filtered = activities;
+    if (currentFilter === 'project') {
+      filtered = activities.filter(a => a.type && a.type.includes('project'));
+    } else if (currentFilter === 'task') {
+      filtered = activities.filter(a => a.type && a.type.includes('task'));
+    } else if (currentFilter === 'team') {
+      filtered = activities.filter(a => a.type && a.type.includes('member'));
+    }
+
+    if (!filtered.length) {
+      notifList.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">📭</div>
+          <div class="empty-title">Nenhuma notificação</div>
+          <div class="empty-desc">Você está tudo certo! Nenhuma notificação pendente.</div>
+        </div>`;
+      return;
+    }
+
+    notifList.innerHTML = filtered.slice(0, 50).map(a => `
+      <div class="notification-item">
+        <div class="notification-icon">${a.icon || '📌'}</div>
+        <div class="notification-content">
+          <div class="notification-title">${a.text}</div>
+          <div class="notification-desc">${a.meta || App.timeAgo(a.createdAt)}</div>
+          <div class="notification-time">ID: ${a.createdAt}</div>
+        </div>
+      </div>`).join('');
+  }
+
+  function filterNotifications(type) {
+    currentFilter = type;
+    document.querySelectorAll('.notif-filter button').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    renderNotifications();
+  }
+
+  function clearAllNotifications() {
+    if (confirm('Deseja limpar todas as notificações?')) {
+      Storage.setActivities([]);
+      renderNotifications();
+      App.toast('Notificações limpas', 'success');
+    }
+  }
+
+  renderNotifications();
+  App.initSidebar();
+</script>
+</body>
+</html>

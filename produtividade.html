@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Flowtask – Produtividade</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <script src="js/theme.js"></script>
+  <script src="js/auth.js"></script>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main-content">
+    <header class="topbar" id="topbar"></header>
+    <main class="page-content">
+
+      <!-- Stats Overview -->
+      <div class="stats-grid" id="prod-stats" style="margin-bottom:28px;"></div>
+
+      <!-- Charts Row -->
+      <div class="grid-2 mb-6" id="charts-row"></div>
+
+      <!-- Programação em Pares -->
+      <div class="section-header mb-4">
+        <div>
+          <div class="section-title">🤝 Programação em Pares (Pair Programming)</div>
+          <div class="text-sm text-muted mt-1">Duplas ativas e seus resultados</div>
+        </div>
+        <button class="btn btn-primary" onclick="openPairModal()">+ Nova Dupla</button>
+      </div>
+
+      <div id="pairs-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-bottom:28px;"></div>
+
+      <!-- Ranking de Produtividade -->
+      <div class="section-header mb-4">
+        <div class="section-title">🏆 Ranking de Produtividade</div>
+      </div>
+      <div class="card mb-6">
+        <div class="card-body no-padding">
+          <div id="ranking-list"></div>
+        </div>
+      </div>
+
+      <!-- Tarefas por Status -->
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📊 Distribuição de Tarefas</div>
+          </div>
+          <div class="card-body" id="task-distribution"></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📈 Progresso dos Projetos</div>
+          </div>
+          <div class="card-body" id="project-progress-list"></div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- Modal Nova Dupla -->
+<div class="modal-overlay" id="modal-pair">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-pair-title">🤝 Nova Dupla</div>
+      <button class="modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-pair">
+        <input type="hidden" id="pair-edit-id"/>
+        <div class="form-group">
+          <label class="form-label">Membro 1 <span>*</span></label>
+          <select class="form-select" id="pair-member1" required>
+            <option value="">Selecionar membro...</option>
+          </select>
+        </div>
+        <div style="text-align:center;font-size:24px;color:var(--primary);margin:8px 0;">🤝</div>
+        <div class="form-group">
+          <label class="form-label">Membro 2 <span>*</span></label>
+          <select class="form-select" id="pair-member2" required>
+            <option value="">Selecionar membro...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Projeto</label>
+          <select class="form-select" id="pair-project">
+            <option value="">Selecionar projeto...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Descrição da Sessão</label>
+          <textarea class="form-textarea" id="pair-desc" placeholder="Ex: Revisão de código, integração de APIs..." style="min-height:70px;"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Tarefas Concluídas</label>
+            <input type="number" class="form-input" id="pair-tasks" min="0" value="0"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tempo Médio (horas)</label>
+            <input type="number" class="form-input" id="pair-time" min="0" step="0.5" value="0"/>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="btn-delete-pair" style="display:none;margin-right:auto;">🗑 Excluir</button>
+      <button class="btn btn-ghost" onclick="App.closeModal('modal-pair')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-save-pair">💾 Salvar Dupla</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Sessão de Pair -->
+<div class="modal-overlay" id="modal-session">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">➕ Registrar Sessão</div>
+      <button class="modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-session">
+        <input type="hidden" id="session-pair-id"/>
+        <div class="form-group">
+          <label class="form-label">Data da Sessão</label>
+          <input type="date" class="form-input" id="session-date"/>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Tarefas Concluídas</label>
+            <input type="number" class="form-input" id="session-tasks" min="0" value="1"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Duração (horas)</label>
+            <input type="number" class="form-input" id="session-duration" min="0" step="0.5" value="2"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notas</label>
+          <textarea class="form-textarea" id="session-notes" placeholder="O que foi feito nesta sessão?..." style="min-height:70px;"></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="App.closeModal('modal-session')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-save-session">✅ Registrar</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/storage.js"></script>
+<script src="js/app.js"></script>
+<script>
+  Storage.initDemoData();
+  document.getElementById('sidebar').innerHTML = getSidebarHTML('produtividade.html');
+  document.getElementById('topbar').innerHTML = getTopbarHTML('⚡ Produtividade', 'Acompanhe o desempenho da equipe e das duplas de programação');
+  App.initModal('modal-pair');
+  App.initModal('modal-session');
+
+  function renderStats() {
+    const tasks = Storage.getTasks();
+    const pairs = Storage.getPairs();
+    const done = tasks.filter(t => t.status === 'done').length;
+    const total = tasks.length;
+    const pct = total ? Math.round((done / total) * 100) : 0;
+    const totalPairTasks = pairs.reduce((sum, p) => sum + (p.tasksCompleted || 0), 0);
+    const avgTime = pairs.length ?
+      (pairs.reduce((sum, p) => sum + (p.avgTime || 0), 0) / pairs.length).toFixed(1) : 0;
+
+    document.getElementById('prod-stats').innerHTML = `
+      <div class="stat-card">
+        <div class="stat-icon purple">📊</div>
+        <div class="stat-info">
+          <div class="stat-label">Taxa de Conclusão</div>
+          <div class="stat-value">${pct}%</div>
+          <div class="stat-sub">${done} de ${total} tarefas</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green">✅</div>
+        <div class="stat-info">
+          <div class="stat-label">Tarefas Concluídas</div>
+          <div class="stat-value">${done}</div>
+          <div class="stat-sub">Total do período</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon blue">🤝</div>
+        <div class="stat-info">
+          <div class="stat-label">Duplas Ativas</div>
+          <div class="stat-value">${pairs.length}</div>
+          <div class="stat-sub">${totalPairTasks} tarefas em pair</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon orange">⏱</div>
+        <div class="stat-info">
+          <div class="stat-label">Tempo Médio/Dupla</div>
+          <div class="stat-value">${avgTime}h</div>
+          <div class="stat-sub">Por sessão de pair</div>
+        </div>
+      </div>`;
+  }
+
+  function renderCharts() {
+    const tasks = Storage.getTasks();
+    const done = tasks.filter(t => t.status === 'done').length;
+    const doing = tasks.filter(t => t.status === 'doing').length;
+    const todo = tasks.filter(t => t.status === 'todo').length;
+    const pct = tasks.length ? Math.round((done / tasks.length) * 100) : 0;
+
+    const alta = tasks.filter(t => t.priority === 'alta').length;
+    const media = tasks.filter(t => t.priority === 'media').length;
+    const baixa = tasks.filter(t => t.priority === 'baixa').length;
+
+    document.getElementById('charts-row').innerHTML = `
+      <!-- Donut de produtividade -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🎯 Índice de Produtividade Geral</div>
+        </div>
+        <div class="card-body">
+          <div style="display:flex;align-items:center;gap:28px;">
+            <div style="position:relative;width:140px;height:140px;flex-shrink:0;">
+              ${App.donutChart(pct, 140, 14, pct >= 75 ? '#4CAF50' : pct >= 50 ? '#6C63FF' : '#FF9800')}
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                <div style="font-size:28px;font-weight:800;">${pct}%</div>
+                <div style="font-size:10px;color:var(--text-muted);">Produtividade</div>
+                <div style="font-size:10px;color:var(--green);font-weight:600;">+12% vs. mês ant.</div>
+              </div>
+            </div>
+            <div style="flex:1;">
+              ${[
+                { label: 'Concluídas', value: done, color: '#4CAF50', icon: '✅' },
+                { label: 'Em Andamento', value: doing, color: '#2196F3', icon: '🔄' },
+                { label: 'A Fazer', value: todo, color: '#9CA3AF', icon: '📋' }
+              ].map(s => `
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                  <div style="width:10px;height:10px;border-radius:50%;background:${s.color};flex-shrink:0;"></div>
+                  <div style="flex:1;font-size:12px;color:var(--text-secondary);">${s.icon} ${s.label}</div>
+                  <div style="font-size:14px;font-weight:700;">${s.value}</div>
+                  <div style="font-size:11px;color:var(--text-muted);width:40px;text-align:right;">${tasks.length ? Math.round((s.value/tasks.length)*100) : 0}%</div>
+                </div>`).join('')}
+              <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+                <div style="font-size:13px;font-weight:700;margin-bottom:8px;">Total de Tarefas</div>
+                <div class="progress-bar" style="height:8px;">
+                  <div class="progress-fill" style="width:${pct}%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Prioridades -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🎯 Distribuição por Prioridade</div>
+        </div>
+        <div class="card-body">
+          <div style="display:flex;flex-direction:column;gap:16px;">
+            ${[
+              { label: 'Alta Prioridade', value: alta, color: '#FF5252', bg: '#FFEAEA', icon: '🔴', pct: tasks.length ? Math.round((alta/tasks.length)*100) : 0 },
+              { label: 'Média Prioridade', value: media, color: '#FF9800', bg: '#FFF3E0', icon: '🟡', pct: tasks.length ? Math.round((media/tasks.length)*100) : 0 },
+              { label: 'Baixa Prioridade', value: baixa, color: '#4CAF50', bg: '#E8F5E9', icon: '🟢', pct: tasks.length ? Math.round((baixa/tasks.length)*100) : 0 }
+            ].map(s => `
+              <div>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <span style="font-size:14px;">${s.icon}</span>
+                    <span style="font-size:13px;font-weight:600;">${s.label}</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:13px;font-weight:800;color:${s.color};">${s.value}</span>
+                    <span style="font-size:11px;color:var(--text-muted);">(${s.pct}%)</span>
+                  </div>
+                </div>
+                <div class="progress-bar" style="height:8px;">
+                  <div style="height:100%;width:${s.pct}%;background:${s.color};border-radius:4px;transition:width 0.6s ease;"></div>
+                </div>
+              </div>`).join('')}
+            
+            <div style="margin-top:8px;padding:14px;background:var(--bg);border-radius:12px;text-align:center;">
+              <div style="font-size:12px;color:var(--text-muted);">Total de tarefas registradas</div>
+              <div style="font-size:28px;font-weight:800;color:var(--primary);">${tasks.length}</div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function renderPairs() {
+    const pairs = Storage.getPairs();
+    const members = Storage.getMembers();
+    const projects = Storage.getProjects();
+    const grid = document.getElementById('pairs-grid');
+
+    if (!pairs.length) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
+        <div class="empty-icon">🤝</div>
+        <h3>Nenhuma dupla criada</h3>
+        <p>Crie duplas de programação para acompanhar a produtividade em pares!</p>
+        <button class="btn btn-primary" onclick="openPairModal()">+ Criar Primeira Dupla</button>
+      </div>`;
+      return;
+    }
+
+    grid.innerHTML = pairs.map(pair => {
+      const m1 = members.find(m => m.id === pair.member1Id);
+      const m2 = members.find(m => m.id === pair.member2Id);
+      const proj = projects.find(p => p.id === pair.projectId);
+      if (!m1 || !m2) return '';
+
+      const col1 = App.getAvatarColor(m1.name);
+      const col2 = App.getAvatarColor(m2.name);
+      const sessions = pair.sessions || [];
+      const totalSessions = sessions.length;
+
+      return `
+        <div class="pair-card">
+          <div class="pair-members">
+            <div style="text-align:center;">
+              <div class="pair-avatar" style="background:linear-gradient(135deg,${col1},${col1}cc);margin:0 auto 4px;">${App.getInitials(m1.name)}</div>
+              <div style="font-size:11px;font-weight:600;">${m1.name.split(' ')[0]}</div>
+              <div style="font-size:10px;color:var(--text-muted);">${m1.role ? m1.role.split(' ')[0] : 'Dev'}</div>
+            </div>
+            <div class="pair-connector">🤝</div>
+            <div style="text-align:center;">
+              <div class="pair-avatar" style="background:linear-gradient(135deg,${col2},${col2}cc);margin:0 auto 4px;">${App.getInitials(m2.name)}</div>
+              <div style="font-size:11px;font-weight:600;">${m2.name.split(' ')[0]}</div>
+              <div style="font-size:10px;color:var(--text-muted);">${m2.role ? m2.role.split(' ')[0] : 'Dev'}</div>
+            </div>
+          </div>
+
+          ${proj ? `<div style="text-align:center;font-size:11px;color:var(--text-muted);margin-bottom:12px;padding:4px 10px;background:var(--bg);border-radius:8px;">📁 ${proj.name}</div>` : ''}
+          ${pair.description ? `<div style="font-size:11px;color:var(--text-secondary);text-align:center;margin-bottom:12px;">${pair.description}</div>` : ''}
+
+          <div class="pair-stats">
+            <div class="pair-stat">
+              <div class="pair-stat-value">${pair.tasksCompleted || 0}</div>
+              <div class="pair-stat-label">✅ Tarefas</div>
+            </div>
+            <div class="pair-stat">
+              <div class="pair-stat-value">${pair.avgTime || 0}h</div>
+              <div class="pair-stat-label">⏱ Tempo Médio</div>
+            </div>
+            <div class="pair-stat">
+              <div class="pair-stat-value">${totalSessions}</div>
+              <div class="pair-stat-label">🗓 Sessões</div>
+            </div>
+            <div class="pair-stat">
+              <div class="pair-stat-value">${pair.tasksCompleted && pair.avgTime ? (pair.tasksCompleted / pair.avgTime).toFixed(1) : '0'}</div>
+              <div class="pair-stat-label">🚀 Vel./hora</div>
+            </div>
+          </div>
+
+          ${sessions.length ? `
+          <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);">
+            <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:8px;">ÚLTIMAS SESSÕES</div>
+            ${sessions.slice(-3).reverse().map(s => `
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:6px;background:var(--bg);border-radius:8px;margin-bottom:4px;">
+                <span style="font-size:11px;color:var(--text-secondary);">📅 ${App.formatDate(s.date)}</span>
+                <div style="display:flex;gap:8px;">
+                  <span style="font-size:11px;color:var(--green);">✅ ${s.tasks}</span>
+                  <span style="font-size:11px;color:var(--blue);">⏱ ${s.duration}h</span>
+                </div>
+              </div>`).join('')}
+          </div>` : ''}
+
+          <div style="display:flex;gap:6px;margin-top:14px;">
+            <button class="btn btn-primary btn-xs flex-1" style="justify-content:center;" onclick="openSessionModal('${pair.id}')">+ Sessão</button>
+            <button class="btn btn-outline btn-xs" onclick="openPairModal('${pair.id}')">✏️</button>
+            <button class="btn btn-danger btn-xs" onclick="deletePair('${pair.id}')">🗑</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function renderRanking() {
+    const members = Storage.getMembers();
+    const tasks = Storage.getTasks();
+
+    const ranking = members.map(m => {
+      const memberTasks = tasks.filter(t => t.assigneeId === m.id);
+      const done = memberTasks.filter(t => t.status === 'done').length;
+      const total = memberTasks.length;
+      const pct = total ? Math.round((done / total) * 100) : 0;
+      return { member: m, done, total, pct };
+    }).sort((a, b) => b.done - a.done || b.pct - a.pct);
+
+    const medals = ['🥇', '🥈', '🥉'];
+
+    document.getElementById('ranking-list').innerHTML = ranking.map((r, i) => {
+      const col = App.getAvatarColor(r.member.name);
+      return `
+        <div style="display:flex;align-items:center;gap:16px;padding:16px 20px;border-bottom:1px solid var(--border);transition:background 0.2s;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
+          <div style="font-size:22px;width:30px;text-align:center;">${medals[i] || (i + 1)}</div>
+          <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,${col},${col}cc);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:700;flex-shrink:0;">
+            ${App.getInitials(r.member.name)}
+          </div>
+          <div style="flex:1;">
+            <div style="font-size:14px;font-weight:700;">${r.member.name}</div>
+            <div style="font-size:11px;color:var(--text-muted);">${r.member.role || 'Membro'}</div>
+          </div>
+          <div style="min-width:200px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+              <span style="font-size:11px;color:var(--text-muted);">${r.done} de ${r.total} tarefas</span>
+              <span style="font-size:12px;font-weight:700;color:${r.pct >= 75 ? 'var(--green)' : r.pct >= 50 ? 'var(--primary)' : 'var(--orange)'};">${r.pct}%</span>
+            </div>
+            <div class="progress-bar" style="height:6px;">
+              <div class="progress-fill ${r.pct >= 75 ? 'green' : r.pct >= 50 ? '' : 'orange'}" style="width:${r.pct}%"></div>
+            </div>
+          </div>
+          <div style="text-align:center;min-width:60px;">
+            <div style="font-size:20px;font-weight:800;color:var(--primary);">${r.done}</div>
+            <div style="font-size:10px;color:var(--text-muted);">concluídas</div>
+          </div>
+        </div>`;
+    }).join('') || `<div class="empty-state"><p>Nenhum dado disponível.</p></div>`;
+  }
+
+  function renderTaskDistribution() {
+    const tasks = Storage.getTasks();
+    const projects = Storage.getProjects();
+
+    // Por projeto
+    const distrib = document.getElementById('task-distribution');
+    if (distrib) {
+      const cols = [
+        { key: 'done', label: '✅ Concluídas', color: '#4CAF50', count: tasks.filter(t => t.status === 'done').length },
+        { key: 'doing', label: '🔄 Em Andamento', color: '#2196F3', count: tasks.filter(t => t.status === 'doing').length },
+        { key: 'todo', label: '📋 A Fazer', color: '#9CA3AF', count: tasks.filter(t => t.status === 'todo').length }
+      ];
+      const total = tasks.length || 1;
+
+      distrib.innerHTML = `
+        <div style="margin-bottom:16px;">
+          ${cols.map(c => `
+            <div style="margin-bottom:14px;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+                <span style="font-size:13px;font-weight:600;">${c.label}</span>
+                <span style="font-size:13px;font-weight:800;color:${c.color};">${c.count} (${Math.round((c.count/total)*100)}%)</span>
+              </div>
+              <div style="height:10px;background:var(--bg);border-radius:6px;overflow:hidden;">
+                <div style="height:100%;width:${Math.round((c.count/total)*100)}%;background:${c.color};border-radius:6px;transition:width 0.6s ease;"></div>
+              </div>
+            </div>`).join('')}
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px;">
+          ${cols.map(c => `
+            <div style="background:var(--bg);border-radius:10px;padding:10px;text-align:center;">
+              <div style="font-size:22px;font-weight:800;color:${c.color};">${c.count}</div>
+              <div style="font-size:10px;color:var(--text-muted);">${c.label.split(' ').slice(1).join(' ')}</div>
+            </div>`).join('')}
+        </div>`;
+    }
+
+    // Progresso dos projetos
+    const projList = document.getElementById('project-progress-list');
+    if (projList) {
+      projList.innerHTML = projects.map(p => {
+        const pColor = App.progressColor(p.progress);
+        const info = App.statusInfo(p.status);
+        return `
+          <div style="margin-bottom:14px;cursor:pointer;" onclick="location.href='projeto.html?id=${p.id}'">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span>${p.icon || '📁'}</span>
+                <span style="font-size:13px;font-weight:600;">${p.name}</span>
+                <span class="status-badge ${info.cls}" style="font-size:10px;padding:2px 8px;">${info.label}</span>
+              </div>
+              <span style="font-size:12px;font-weight:700;">${p.progress || 0}%</span>
+            </div>
+            <div class="progress-bar" style="height:8px;">
+              <div class="progress-fill ${pColor}" style="width:${p.progress || 0}%"></div>
+            </div>
+          </div>`;
+      }).join('') || '<div class="empty-state"><p>Nenhum projeto encontrado.</p></div>';
+    }
+  }
+
+  // === MODAL PAIR ===
+  window.openPairModal = function(id = null) {
+    const members = Storage.getMembers();
+    const projects = Storage.getProjects();
+    const mOpts = '<option value="">Selecionar membro...</option>' + members.map(m => `<option value="${m.id}">${m.name} - ${m.role || 'Membro'}</option>`).join('');
+    const pOpts = '<option value="">Selecionar projeto...</option>' + projects.map(p => `<option value="${p.id}">${p.icon || '📁'} ${p.name}</option>`).join('');
+
+    document.getElementById('pair-member1').innerHTML = mOpts;
+    document.getElementById('pair-member2').innerHTML = mOpts;
+    document.getElementById('pair-project').innerHTML = pOpts;
+    document.getElementById('pair-edit-id').value = '';
+    document.getElementById('form-pair').reset();
+    document.getElementById('modal-pair-title').textContent = '🤝 Nova Dupla';
+    document.getElementById('btn-delete-pair').style.display = 'none';
+    document.getElementById('pair-tasks').value = 0;
+    document.getElementById('pair-time').value = 0;
+
+    if (id) {
+      const pair = Storage.getPairs().find(p => p.id === id);
+      if (!pair) return;
+      document.getElementById('modal-pair-title').textContent = '✏️ Editar Dupla';
+      document.getElementById('pair-edit-id').value = id;
+      document.getElementById('pair-member1').value = pair.member1Id;
+      document.getElementById('pair-member2').value = pair.member2Id;
+      document.getElementById('pair-project').value = pair.projectId || '';
+      document.getElementById('pair-desc').value = pair.description || '';
+      document.getElementById('pair-tasks').value = pair.tasksCompleted || 0;
+      document.getElementById('pair-time').value = pair.avgTime || 0;
+      document.getElementById('btn-delete-pair').style.display = 'block';
+    }
+
+    App.openModal('modal-pair');
+  };
+
+  document.getElementById('btn-save-pair').addEventListener('click', () => {
+    const m1 = document.getElementById('pair-member1').value;
+    const m2 = document.getElementById('pair-member2').value;
+    if (!m1 || !m2) { App.toast('Selecione os dois membros', 'error'); return; }
+    if (m1 === m2) { App.toast('Selecione membros diferentes', 'error'); return; }
+
+    const editId = document.getElementById('pair-edit-id').value;
+    const data = {
+      member1Id: m1,
+      member2Id: m2,
+      projectId: document.getElementById('pair-project').value,
+      description: document.getElementById('pair-desc').value.trim(),
+      tasksCompleted: parseInt(document.getElementById('pair-tasks').value) || 0,
+      avgTime: parseFloat(document.getElementById('pair-time').value) || 0
+    };
+
+    if (editId) {
+      Storage.updatePair(editId, data);
+      App.toast('Dupla atualizada!', 'success');
+    } else {
+      Storage.addPair(data);
+      App.toast('Dupla criada!', 'success');
+    }
+
+    App.closeModal('modal-pair');
+    renderAll();
+  });
+
+  document.getElementById('btn-delete-pair').addEventListener('click', () => {
+    const id = document.getElementById('pair-edit-id').value;
+    if (!id) return;
+    App.confirm('Excluir esta dupla?', () => {
+      Storage.deletePair(id);
+      App.closeModal('modal-pair');
+      App.toast('Dupla excluída', 'warning');
+      renderAll();
+    });
+  });
+
+  // === MODAL SESSION ===
+  window.openSessionModal = function(pairId) {
+    document.getElementById('session-pair-id').value = pairId;
+    document.getElementById('form-session').reset();
+    document.getElementById('session-date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('session-tasks').value = 1;
+    document.getElementById('session-duration').value = 2;
+    App.openModal('modal-session');
+  };
+
+  document.getElementById('btn-save-session').addEventListener('click', () => {
+    const pairId = document.getElementById('session-pair-id').value;
+    const tasks = parseInt(document.getElementById('session-tasks').value) || 0;
+    const duration = parseFloat(document.getElementById('session-duration').value) || 0;
+    const date = document.getElementById('session-date').value;
+    const notes = document.getElementById('session-notes').value.trim();
+
+    const pair = Storage.getPairs().find(p => p.id === pairId);
+    if (!pair) return;
+
+    const sessions = [...(pair.sessions || []), { date, tasks, duration, notes, id: 'sess_' + Date.now() }];
+    const totalTasks = (pair.tasksCompleted || 0) + tasks;
+    const allDurations = sessions.map(s => s.duration);
+    const newAvg = allDurations.reduce((a, b) => a + b, 0) / allDurations.length;
+
+    Storage.updatePair(pairId, {
+      sessions,
+      tasksCompleted: totalTasks,
+      avgTime: parseFloat(newAvg.toFixed(1))
+    });
+
+    App.closeModal('modal-session');
+    App.toast(`Sessão registrada! +${tasks} tarefas`, 'success');
+    renderAll();
+  });
+
+  window.deletePair = function(id) {
+    App.confirm('Excluir esta dupla?', () => {
+      Storage.deletePair(id);
+      App.toast('Dupla excluída', 'warning');
+      renderAll();
+    });
+  };
+
+  function renderAll() {
+    renderStats();
+    renderCharts();
+    renderPairs();
+    renderRanking();
+    renderTaskDistribution();
+  }
+
+  renderAll();
+</script>
+</body>
+</html>

@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Flowtask – Projetos</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <script src="js/theme.js"></script>
+  <script src="js/auth.js"></script>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <div class="main-content">
+    <header class="topbar" id="topbar"></header>
+    <main class="page-content">
+
+      <!-- Filter Bar -->
+      <div class="filter-bar">
+        <div class="search-input-wrap" style="flex:1;">
+          <span>🔍</span>
+          <input type="text" id="search-projects" placeholder="Buscar projetos por nome ou descrição..." />
+        </div>
+        <select class="filter-select" id="filter-status">
+          <option value="">Todos os status</option>
+          <option value="andamento">🔵 Em Andamento</option>
+          <option value="concluido">✅ Concluído</option>
+          <option value="atraso">🔴 Em Atraso</option>
+          <option value="planejamento">🟡 Planejamento</option>
+          <option value="pausado">⏸ Pausado</option>
+        </select>
+        <select class="filter-select" id="filter-order">
+          <option value="recent">Mais recentes</option>
+          <option value="name">Nome A-Z</option>
+          <option value="progress">Progresso</option>
+          <option value="deadline">Prazo</option>
+        </select>
+        <button class="btn btn-primary" id="btn-novo">+ Novo Projeto</button>
+      </div>
+
+      <!-- Stats resumo -->
+      <div class="stats-grid" id="proj-stats" style="margin-bottom:24px;"></div>
+
+      <!-- Lista / Grid de projetos -->
+      <div class="section-header">
+        <div class="section-title" id="result-count">Todos os Projetos</div>
+        <div class="flex gap-2">
+          <button class="topbar-icon-btn" id="view-grid" title="Visualização em grade" style="font-size:16px;">⊞</button>
+          <button class="topbar-icon-btn" id="view-list" title="Visualização em lista" style="font-size:16px;">☰</button>
+        </div>
+      </div>
+
+      <div id="projects-container" class="projects-grid"></div>
+
+    </main>
+  </div>
+</div>
+
+<!-- Modal Novo Projeto -->
+<div class="modal-overlay" id="modal-projeto">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-proj-title">🚀 Novo Projeto</div>
+      <button class="modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-projeto">
+        <input type="hidden" id="proj-edit-id"/>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Nome do Projeto <span>*</span></label>
+            <input type="text" class="form-input" id="proj-nome" placeholder="Ex: Sistema de Gestão" required/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <select class="form-select" id="proj-status">
+              <option value="planejamento">🟡 Planejamento</option>
+              <option value="andamento">🔵 Em Andamento</option>
+              <option value="atraso">🔴 Em Atraso</option>
+              <option value="concluido">✅ Concluído</option>
+              <option value="pausado">⏸ Pausado</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Descrição</label>
+          <textarea class="form-textarea" id="proj-desc" placeholder="Descreva o objetivo do projeto..."></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Scrum Master</label>
+            <select class="form-select" id="proj-scrum"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Product Owner</label>
+            <select class="form-select" id="proj-po"></select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Prazo</label>
+            <input type="date" class="form-input" id="proj-prazo"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Ícone</label>
+            <select class="form-select" id="proj-icon">
+              <option value="⚡">⚡ Relâmpago</option>
+              <option value="🌐">🌐 Web</option>
+              <option value="📱">📱 Mobile</option>
+              <option value="📊">📊 Analytics</option>
+              <option value="🛒">🛒 E-commerce</option>
+              <option value="🔐">🔐 Segurança</option>
+              <option value="🤖">🤖 AI/ML</option>
+              <option value="🎨">🎨 Design</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Membros da Equipe</label>
+          <div id="proj-team-select" style="display:flex;flex-wrap:wrap;gap:8px;padding:10px;border:1.5px solid var(--border);border-radius:10px;min-height:50px;"></div>
+          <div class="form-hint">Clique nos membros para selecioná-los</div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="btn-delete-proj" style="display:none;margin-right:auto;">🗑 Excluir</button>
+      <button class="btn btn-ghost" onclick="App.closeModal('modal-projeto')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-salvar-projeto">🚀 Salvar Projeto</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/storage.js"></script>
+<script src="js/app.js"></script>
+<script>
+  Storage.initDemoData();
+  document.getElementById('sidebar').innerHTML = getSidebarHTML('projetos.html');
+  document.getElementById('topbar').innerHTML = getTopbarHTML('📁 Projetos', 'Gerencie todos os seus projetos');
+  App.initModal('modal-projeto');
+
+  let viewMode = 'grid';
+  let currentFilter = { search: '', status: '', order: 'recent' };
+
+  // Verificar query param da URL
+  const urlQ = App.getQueryParam('q');
+  if (urlQ) {
+    document.getElementById('search-projects').value = urlQ;
+    currentFilter.search = urlQ;
+  }
+
+  // Check hash para abrir modal
+  if (window.location.hash === '#novo') openModal();
+
+  function renderStats() {
+    const projects = Storage.getProjects();
+    const stats = [
+      { icon: '📁', label: 'Total', value: projects.length, cls: 'purple' },
+      { icon: '🔵', label: 'Em Andamento', value: projects.filter(p => p.status === 'andamento').length, cls: 'blue' },
+      { icon: '✅', label: 'Concluídos', value: projects.filter(p => p.status === 'concluido').length, cls: 'green' },
+      { icon: '🔴', label: 'Em Atraso', value: projects.filter(p => p.status === 'atraso').length, cls: 'red' }
+    ];
+    document.getElementById('proj-stats').innerHTML = stats.map(s => `
+      <div class="stat-card">
+        <div class="stat-icon ${s.cls}">${s.icon}</div>
+        <div class="stat-info">
+          <div class="stat-label">${s.label}</div>
+          <div class="stat-value">${s.value}</div>
+        </div>
+      </div>`).join('');
+  }
+
+  function getFilteredProjects() {
+    let projects = Storage.getProjects();
+    const { search, status, order } = currentFilter;
+
+    if (search) {
+      const q = search.toLowerCase();
+      projects = projects.filter(p =>
+        p.name.toLowerCase().includes(q) ||
+        (p.description || '').toLowerCase().includes(q)
+      );
+    }
+
+    if (status) projects = projects.filter(p => p.status === status);
+
+    if (order === 'name') projects.sort((a, b) => a.name.localeCompare(b.name));
+    else if (order === 'progress') projects.sort((a, b) => (b.progress || 0) - (a.progress || 0));
+    else if (order === 'deadline') projects.sort((a, b) => {
+      if (!a.deadline) return 1;
+      if (!b.deadline) return -1;
+      return new Date(a.deadline) - new Date(b.deadline);
+    });
+    else projects.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    return projects;
+  }
+
+  function renderProjects() {
+    const projects = getFilteredProjects();
+    const members = Storage.getMembers();
+    const container = document.getElementById('projects-container');
+    const search = currentFilter.search;
+
+    document.getElementById('result-count').textContent =
+      search ? `${projects.length} resultado(s) para "${search}"` : `Todos os Projetos (${projects.length})`;
+
+    if (!projects.length) {
+      container.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
+        <div class="empty-icon">📭</div>
+        <h3>Nenhum projeto encontrado</h3>
+        <p>${search ? `Nenhum resultado para "${search}"` : 'Crie seu primeiro projeto!'}</p>
+        <button class="btn btn-primary" onclick="openModal()">+ Criar Projeto</button>
+      </div>`;
+      return;
+    }
+
+    if (viewMode === 'list') {
+      container.style.display = 'block';
+      container.innerHTML = `
+        <div class="card">
+          <table style="width:100%;border-collapse:collapse;">
+            <thead>
+              <tr style="background:var(--bg);">
+                <th style="text-align:left;padding:12px 20px;font-size:12px;color:var(--text-muted);font-weight:600;">PROJETO</th>
+                <th style="text-align:left;padding:12px;font-size:12px;color:var(--text-muted);font-weight:600;">STATUS</th>
+                <th style="text-align:left;padding:12px;font-size:12px;color:var(--text-muted);font-weight:600;">PROGRESSO</th>
+                <th style="text-align:left;padding:12px;font-size:12px;color:var(--text-muted);font-weight:600;">EQUIPE</th>
+                <th style="text-align:left;padding:12px;font-size:12px;color:var(--text-muted);font-weight:600;">PRAZO</th>
+                <th style="padding:12px;font-size:12px;color:var(--text-muted);font-weight:600;"></th>
+              </tr>
+            </thead>
+            <tbody>
+              ${projects.map(p => {
+                const info = App.statusInfo(p.status);
+                const dl = App.formatDeadline(p.deadline);
+                const teamHtml = (p.team || []).slice(0, 3).map(mid => {
+                  const m = members.find(mb => mb.id === mid);
+                  if (!m) return '';
+                  const col = App.getAvatarColor(m.name);
+                  return `<div class="team-avatar" style="width:24px;height:24px;font-size:9px;background:linear-gradient(135deg,${col},${col}cc)">${App.getInitials(m.name)}</div>`;
+                }).join('');
+                const highlighted = App.highlight(p.name, search);
+                return `
+                <tr style="border-top:1px solid var(--border);cursor:pointer;transition:background 0.2s;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''" onclick="location.href='projeto.html?id=${p.id}'">
+                  <td style="padding:14px 20px;">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                      <div class="project-icon" style="width:34px;height:34px;font-size:16px;">${p.icon || '📁'}</div>
+                      <div>
+                        <div style="font-size:13px;font-weight:700;">${highlighted}</div>
+                        <div style="font-size:11px;color:var(--text-muted);">${p.description || '-'}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td style="padding:14px 12px;"><span class="status-badge ${info.cls}" style="font-size:11px;white-space:nowrap;">${info.label}</span></td>
+                  <td style="padding:14px 12px;min-width:140px;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                      <div class="progress-bar" style="flex:1;"><div class="progress-fill ${App.progressColor(p.progress)}" style="width:${p.progress||0}%"></div></div>
+                      <span style="font-size:11px;font-weight:700;white-space:nowrap;">${p.progress||0}%</span>
+                    </div>
+                  </td>
+                  <td style="padding:14px 12px;"><div class="team-avatars">${teamHtml}</div></td>
+                  <td style="padding:14px 12px;"><span class="deadline-date ${dl.class}" style="font-size:11px;">${dl.text}</span></td>
+                  <td style="padding:14px 12px;">
+                    <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();editProject('${p.id}')">✏️</button>
+                    <button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();deleteProject('${p.id}')">🗑</button>
+                  </td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>`;
+    } else {
+      container.style.display = '';
+      container.className = 'projects-grid';
+      container.innerHTML = projects.map(p => {
+        const info = App.statusInfo(p.status);
+        const pColor = App.progressColor(p.progress);
+        const dl = App.formatDeadline(p.deadline);
+        const teamHtml = (p.team || []).slice(0, 3).map(mid => {
+          const m = members.find(mb => mb.id === mid);
+          if (!m) return '';
+          const col = App.getAvatarColor(m.name);
+          return `<div class="team-avatar" style="background:linear-gradient(135deg,${col},${col}cc)" title="${m.name}">${App.getInitials(m.name)}</div>`;
+        }).join('');
+        const extra = (p.team || []).length > 3 ? `<div class="team-avatar more">+${p.team.length - 3}</div>` : '';
+        const highlighted = App.highlight(p.name, search);
+
+        return `
+          <div class="project-card" onclick="location.href='projeto.html?id=${p.id}'">
+            <div class="project-card-header">
+              <div class="project-icon">${p.icon || '📁'}</div>
+              <div style="display:flex;gap:4px;">
+                <button class="task-action-btn" onclick="event.stopPropagation();editProject('${p.id}')" title="Editar">✏️</button>
+                <button class="task-action-btn" onclick="event.stopPropagation();deleteProject('${p.id}')" title="Excluir">🗑</button>
+              </div>
+            </div>
+            <div class="project-name">${highlighted}</div>
+            <div class="project-desc">${p.description || 'Sem descrição'}</div>
+            <div class="status-badge ${info.cls}" style="font-size:11px;">${info.label}</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+              <div class="team-avatars">${teamHtml}${extra}</div>
+              <span class="deadline-date ${dl.class}" style="font-size:11px;">${dl.text}</span>
+            </div>
+            <div class="progress-section">
+              <div class="progress-header">
+                <span class="progress-label">Progresso</span>
+                <span class="progress-pct">${p.progress || 0}%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill ${pColor}" style="width:${p.progress || 0}%"></div>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+  }
+
+  // === MODAL ===
+  function openModal(proj = null) {
+    const members = Storage.getMembers();
+    const opts = '<option value="">Selecionar...</option>' + members.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+    document.getElementById('proj-scrum').innerHTML = opts;
+    document.getElementById('proj-po').innerHTML = opts;
+    document.getElementById('proj-edit-id').value = '';
+    document.getElementById('form-projeto').reset();
+    document.getElementById('btn-delete-proj').style.display = 'none';
+    document.getElementById('modal-proj-title').textContent = '🚀 Novo Projeto';
+
+    const teamDiv = document.getElementById('proj-team-select');
+    teamDiv.innerHTML = members.map(m => `
+      <div class="member-chip" data-id="${m.id}" onclick="toggleMember(this)"
+        style="display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--border);cursor:pointer;font-size:12px;transition:all 0.2s;background:var(--white);">
+        <div style="width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,${App.getAvatarColor(m.name)},${App.getAvatarColor(m.name)}cc);display:flex;align-items:center;justify-content:center;color:#fff;font-size:8px;font-weight:700;">${App.getInitials(m.name)}</div>
+        <span>${m.name}</span>
+      </div>`).join('');
+
+    if (proj) {
+      document.getElementById('modal-proj-title').textContent = '✏️ Editar Projeto';
+      document.getElementById('proj-edit-id').value = proj.id;
+      document.getElementById('proj-nome').value = proj.name;
+      document.getElementById('proj-desc').value = proj.description || '';
+      document.getElementById('proj-status').value = proj.status;
+      document.getElementById('proj-prazo').value = proj.deadline || '';
+      document.getElementById('proj-icon').value = proj.icon || '⚡';
+      document.getElementById('proj-scrum').value = proj.scrumMaster || '';
+      document.getElementById('proj-po').value = proj.productOwner || '';
+      document.getElementById('btn-delete-proj').style.display = 'block';
+
+      // Selecionar membros
+      setTimeout(() => {
+        document.querySelectorAll('.member-chip').forEach(chip => {
+          if ((proj.team || []).includes(chip.dataset.id)) {
+            chip.classList.add('selected');
+            chip.style.background = 'var(--primary-light)';
+            chip.style.borderColor = 'var(--primary)';
+            chip.style.color = 'var(--primary)';
+          }
+        });
+      }, 50);
+    }
+
+    App.openModal('modal-projeto');
+  }
+
+  window.editProject = function(id) {
+    const proj = Storage.getProject(id);
+    if (proj) openModal(proj);
+  };
+
+  window.deleteProject = function(id) {
+    const proj = Storage.getProject(id);
+    if (!proj) return;
+    App.confirm(`Excluir o projeto "${proj.name}"? Esta ação não pode ser desfeita.`, () => {
+      Storage.deleteProject(id);
+      App.toast(`Projeto "${proj.name}" excluído`, 'warning');
+      renderAll();
+    });
+  };
+
+  window.toggleMember = function(el) {
+    el.classList.toggle('selected');
+    if (el.classList.contains('selected')) {
+      el.style.background = 'var(--primary-light)';
+      el.style.borderColor = 'var(--primary)';
+      el.style.color = 'var(--primary)';
+    } else {
+      el.style.background = 'var(--white)';
+      el.style.borderColor = 'var(--border)';
+      el.style.color = 'var(--text-primary)';
+    }
+  };
+
+  document.getElementById('btn-novo').addEventListener('click', () => openModal());
+
+  document.getElementById('btn-salvar-projeto').addEventListener('click', () => {
+    const name = document.getElementById('proj-nome').value.trim();
+    if (!name) { App.toast('Nome do projeto é obrigatório', 'error'); return; }
+
+    const editId = document.getElementById('proj-edit-id').value;
+    const selectedTeam = Array.from(document.querySelectorAll('.member-chip.selected')).map(el => el.dataset.id);
+
+    const data = {
+      name,
+      description: document.getElementById('proj-desc').value.trim(),
+      status: document.getElementById('proj-status').value,
+      scrumMaster: document.getElementById('proj-scrum').value,
+      productOwner: document.getElementById('proj-po').value,
+      deadline: document.getElementById('proj-prazo').value,
+      icon: document.getElementById('proj-icon').value,
+      team: selectedTeam
+    };
+
+    if (editId) {
+      Storage.updateProject(editId, data);
+      App.toast('Projeto atualizado!', 'success');
+    } else {
+      const proj = Storage.addProject(data);
+      App.toast(`Projeto "${proj.name}" criado!`, 'success');
+    }
+
+    App.closeModal('modal-projeto');
+    renderAll();
+  });
+
+  document.getElementById('btn-delete-proj').addEventListener('click', () => {
+    const id = document.getElementById('proj-edit-id').value;
+    if (!id) return;
+    App.closeModal('modal-projeto');
+    deleteProject(id);
+  });
+
+  // View toggle
+  document.getElementById('view-grid').addEventListener('click', () => {
+    viewMode = 'grid';
+    renderProjects();
+    document.getElementById('view-grid').style.background = 'var(--primary-light)';
+    document.getElementById('view-list').style.background = '';
+  });
+  document.getElementById('view-list').addEventListener('click', () => {
+    viewMode = 'list';
+    renderProjects();
+    document.getElementById('view-list').style.background = 'var(--primary-light)';
+    document.getElementById('view-grid').style.background = '';
+  });
+
+  // Filters
+  document.getElementById('search-projects').addEventListener('input', e => {
+    currentFilter.search = e.target.value.trim();
+    renderProjects();
+  });
+  document.getElementById('filter-status').addEventListener('change', e => {
+    currentFilter.status = e.target.value;
+    renderProjects();
+  });
+  document.getElementById('filter-order').addEventListener('change', e => {
+    currentFilter.order = e.target.value;
+    renderProjects();
+  });
+
+  function renderAll() {
+    renderStats();
+    renderProjects();
+  }
+
+  renderAll();
+</script>
+</body>
+</html>

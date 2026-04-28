@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Flowtask – Gestão de Projetos Ágil</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <script src="js/theme.js"></script>
+  <style>
+    /* Tema Claro (padrão) */
+    body {
+      background: linear-gradient(135deg, #6C63FF 0%, #5A52D5 100%);
+      transition: background 0.3s ease;
+    }
+    
+    /* Tema Escuro */
+    [data-theme="dark"] body {
+      background: linear-gradient(135deg, #1a1d2e 0%, #0f1117 100%);
+    }
+    
+    /* Landing Header */
+    .landing-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 20px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 50;
+    }
+    
+    .landing-header-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #fff;
+      font-weight: 700;
+      font-size: 20px;
+    }
+    
+    .landing-header-controls {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    
+    .landing-header-controls .theme-btn {
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 10px 15px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 16px;
+    }
+    
+    .landing-header-controls .theme-btn:hover {
+      background: rgba(255,255,255,0.3);
+      border-color: rgba(255,255,255,0.5);
+    }
+    
+    .landing-header-controls .btn-entrar {
+      background: #fff;
+      color: #6C63FF;
+      padding: 12px 32px;
+      border-radius: 10px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+    }
+    
+    [data-theme="dark"] .landing-header-controls .btn-entrar {
+      background: #E4E6EB;
+      color: #1a1d2e;
+    }
+    
+    .landing-header-controls .btn-entrar:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+    
+    .landing-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; padding-top: 80px; }
+    .landing-content { max-width: 1200px; width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+    .landing-text h1 { font-size: 56px; font-weight: 800; color: #fff; margin-bottom: 16px; line-height: 1.2; }
+    .landing-text p { font-size: 18px; color: rgba(255,255,255,0.9); margin-bottom: 32px; line-height: 1.6; }
+    .landing-image { position: relative; height: 400px; display: flex; align-items: center; justify-content: center; }
+    .device-frame { width: 100%; height: 100%; display: grid; grid-template-columns: 1fr 1.2fr; gap: 20px; }
+    .device { background: rgba(255,255,255,0.1); border-radius: 20px; padding: 10px; backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; }
+    .device.mobile { border-radius: 40px; border: 8px solid rgba(255,255,255,0.2); }
+    .device.desktop { border-radius: 15px; }
+    .device-content { width: 100%; height: 100%; background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(240,245,250,0.95)); border-radius: inherit; display: flex; flex-direction: column; padding: 20px; align-items: center; justify-content: center; transition: background 0.3s ease; }
+    [data-theme="dark"] .device-content { background: linear-gradient(135deg, rgba(28,31,43,0.95), rgba(15,17,23,0.95)); }
+    .device.mobile .device-content { padding: 15px; }
+    .screen-header { background: linear-gradient(135deg, #6C63FF, #5A52D5); color: #fff; padding: 15px; border-radius: 10px; margin-bottom: 12px; text-align: center; font-size: 24px; font-weight: 600; }
+    [data-theme="dark"] .screen-header { background: linear-gradient(135deg, #4a42a8, #3a3285); }
+    .screen-body { flex: 1; display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; width: 100%; }
+    .screen-item { background: #E5E7EB; border-radius: 8px; }
+    [data-theme="dark"] .screen-item { background: #2d3139; }
+    @media (max-width: 768px) {
+      .landing-header { padding: 16px 20px; }
+      .landing-header-controls { gap: 12px; }
+      .landing-header-controls .btn-entrar { padding: 10px 20px; font-size: 14px; }
+      .landing-content { grid-template-columns: 1fr; gap: 30px; }
+      .landing-text h1 { font-size: 36px; }
+      .landing-text p { font-size: 16px; }
+      .landing-image { height: 300px; }
+      .device-frame { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<!-- Landing Header -->
+<div class="landing-header">
+  <div class="landing-header-logo">
+    <span>✓</span>
+    <span>Flowtask</span>
+  </div>
+  <div class="landing-header-controls">
+    <button id="theme-btn-landing" class="theme-btn" title="Alternar tema">🌙</button>
+    <a href="login.html" class="btn-entrar">Entrar</a>
+  </div>
+</div>
+
+<div class="landing-container">
+  <div class="landing-content">
+    <div class="landing-text">
+      <h1>Flowtask</h1>
+      <p>Gestão ágil de projetos, simples e eficiente. Colabore com sua equipe, organize tarefas com Kanban, Scrum e XP, e entregue resultados incríveis.</p>
+    </div>
+    <div class="landing-image">
+      <div class="device-frame">
+        <div class="device mobile">
+          <div class="device-content">
+            <div class="screen-header">Flowtask</div>
+            <div class="screen-body">
+              <div class="screen-item"></div>
+              <div class="screen-item"></div>
+              <div class="screen-item"></div>
+              <div class="screen-item"></div>
+            </div>
+          </div>
+        </div>
+        <div class="device desktop">
+          <div class="device-content">
+            <div class="screen-header">Flowtask</div>
+            <div class="screen-body">
+              <div class="screen-item"></div>
+              <div class="screen-item"></div>
+              <div class="screen-item"></div>
+              <div class="screen-item"></div>
+              <div class="screen-item"></div>
+              <div class="screen-item"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer com Setup -->
+<footer style="position: fixed; bottom: 20px; right: 20px; z-index: 10;">
+  <a href="setup.html" style="color: rgba(255,255,255,0.6); font-size: 12px; text-decoration: none; transition: all 0.3s ease; display: inline-block;" title="Guia de Instalação" onmouseover="this.style.color='rgba(255,255,255,0.9)'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">📖 Guia de Setup</a>
+</footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Inicializar tema
+  Theme.init();
+  
+  const themeBtnLanding = document.getElementById('theme-btn-landing');
+  themeBtnLanding.textContent = Theme.getIcon();
+  
+  themeBtnLanding.addEventListener('click', () => {
+    Theme.toggle();
+    themeBtnLanding.textContent = Theme.getIcon();
+  });
+});
+</script>
+</body>
+</html>

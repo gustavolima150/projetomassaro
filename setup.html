@@ -1,0 +1,129 @@
+<!-- ==========================================
+     SETUP.HTML - Guia de Instalação e Configuração
+     ========================================== -->
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Setup – Flowtask</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <script src="js/theme.js"></script>
+  <style>
+    .setup-container { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
+    .setup-card { background: var(--white); border-radius: var(--card-radius); box-shadow: var(--shadow-md); padding: 40px; margin-bottom: 24px; }
+    [data-theme="dark"] .setup-card { background: var(--white); }
+    .setup-card h2 { font-size: 20px; font-weight: 700; color: var(--text-primary); margin-bottom: 16px; }
+    .setup-card p { color: var(--text-secondary); line-height: 1.6; margin-bottom: 12px; }
+    .setup-card code { background: var(--bg); padding: 2px 6px; border-radius: 4px; font-family: 'Courier New', monospace; color: var(--primary); }
+    .setup-card pre { background: var(--bg); padding: 16px; border-radius: 8px; overflow-x: auto; margin: 16px 0; }
+    .setup-card pre code { padding: 0; background: none; color: var(--text-primary); }
+    .step-number { display: inline-block; width: 28px; height: 28px; background: var(--primary); color: #fff; border-radius: 50%; text-align: center; line-height: 28px; font-weight: 700; margin-right: 12px; }
+    .setup-list { list-style: none; }
+    .setup-list li { margin-bottom: 12px; display: flex; align-items: flex-start; gap: 8px; }
+    .setup-list li::before { content: "✓"; color: var(--green); font-weight: 700; flex-shrink: 0; }
+    .btn-back { display: inline-block; padding: 12px 24px; background: var(--primary); color: #fff; border-radius: 10px; text-decoration: none; margin-top: 24px; }
+    .btn-back:hover { background: var(--primary-dark); }
+  </style>
+</head>
+<body>
+<div class="setup-container">
+  <h1 style="text-align: center; margin-bottom: 40px; color: var(--text-primary);">🚀 Guia de Instalação – Flowtask</h1>
+
+  <!-- Passo 1: Criar Banco de Dados -->
+  <div class="setup-card">
+    <h2><span class="step-number">1</span> Criar Banco de Dados MySQL</h2>
+    <p>Acesse seu PHP MyAdmin ou terminal MySQL e execute:</p>
+    <pre><code>CREATE DATABASE flowtask;
+USE flowtask;</code></pre>
+    <p>Ou se preferir usando a linha de comando:</p>
+    <pre><code>mysql -u root -p
+CREATE DATABASE flowtask;
+EXIT;</code></pre>
+  </div>
+
+  <!-- Passo 2: Configurar Backend -->
+  <div class="setup-card">
+    <h2><span class="step-number">2</span> Configurar arquivo backend/config.php</h2>
+    <p>Edite o arquivo <code>backend/config.php</code> com suas credenciais MySQL:</p>
+    <pre><code>define('DB_HOST', 'localhost');
+define('DB_USER', 'seu_usuario');  // Altere conforme sua configuração
+define('DB_PASS', 'sua_senha');    // Altere conforme sua configuração
+define('DB_NAME', 'flowtask');</code></pre>
+    <p><strong>Nota:</strong> Se não tem senha MySQL, deixe <code>DB_PASS</code> vazio.</p>
+  </div>
+
+  <!-- Passo 3: Servidor Local -->
+  <div class="setup-card">
+    <h2><span class="step-number">3</span> Iniciar Servidor Local</h2>
+    <p>Use o PHP built-in server ou um servidor Apache/Nginx.</p>
+    <p><strong>Opção 1 - PHP Built-in:</strong></p>
+    <pre><code>cd /caminho/para/flowtask
+php -S localhost:8000</code></pre>
+    <p><strong>Opção 2 - XAMPP/WAMP:</strong> Coloque a pasta dentro de htdocs ou www e acesse via <code>http://localhost/flowtask</code></p>
+  </div>
+
+  <!-- Passo 4: Acessar o Sistema -->
+  <div class="setup-card">
+    <h2><span class="step-number">4</span> Acessar o Sistema</h2>
+    <p>Abra seu navegador e acesse:</p>
+    <pre><code>http://localhost:8000</code></pre>
+    <p>Ou se estiver usando XAMPP:</p>
+    <pre><code>http://localhost/flowtask</code></pre>
+    <p>Você será redirecionado para a tela inicial (landing page).</p>
+  </div>
+
+  <!-- Fluxo de Uso -->
+  <div class="setup-card">
+    <h2>📋 Fluxo de Uso</h2>
+    <ul class="setup-list">
+      <li>Acesse a <strong>landing page</strong> (página inicial)</li>
+      <li>Clique em <strong>"Entrar"</strong> para ir para login</li>
+      <li>Se não tem conta, clique em <strong>"Cadastre-se"</strong></li>
+      <li>Após cadastro, faça login com seu email e senha</li>
+      <li>Você será redirecionado para o <strong>dashboard</strong> principal</li>
+      <li>Use o botão de <strong>tema (🌙/☀️)</strong> para alternar entre modo claro e escuro</li>
+    </ul>
+  </div>
+
+  <!-- Funcionalidades Adicionadas -->
+  <div class="setup-card">
+    <h2>✨ Funcionalidades Adicionadas</h2>
+    <ul class="setup-list">
+      <li><strong>Landing Page:</strong> Página inicial com descrição do sistema</li>
+      <li><strong>Login:</strong> Autenticação segura com hash de senha</li>
+      <li><strong>Cadastro:</strong> Registro de novos usuários com validação</li>
+      <li><strong>Tema Global:</strong> Modo claro/escuro sincronizado em todas as páginas</li>
+      <li><strong>Banco de Dados:</strong> Persistência de usuários, projetos e tarefas no MySQL</li>
+      <li><strong>Segurança:</strong> Senhas com hash BCRYPT e validação de email</li>
+    </ul>
+  </div>
+
+  <!-- Troubleshooting -->
+  <div class="setup-card">
+    <h2>❓ Solução de Problemas</h2>
+    <p><strong>Erro: "Erro na conexão com o banco de dados"</strong></p>
+    <ul class="setup-list">
+      <li>Verifique se MySQL está rodando</li>
+      <li>Confira as credenciais em <code>backend/config.php</code></li>
+      <li>Verifique se o banco de dados <code>flowtask</code> foi criado</li>
+    </ul>
+    <p style="margin-top: 16px;"><strong>Erro: "Email ou senha incorretos"</strong></p>
+    <ul class="setup-list">
+      <li>Verifique se você já cadastrou sua conta</li>
+      <li>Certifique-se de que email e senha estão corretos</li>
+    </ul>
+  </div>
+
+  <!-- Voltar -->
+  <div style="text-align: center;">
+    <a href="landing.html" class="btn-back">← Voltar para Landing Page</a>
+  </div>
+</div>
+
+<script>
+  Theme.init();
+</script>
+</body>
+</html>
