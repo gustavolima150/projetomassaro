@@ -6,6 +6,39 @@
   <title>Login – Flowtask</title>
   <link rel="stylesheet" href="css/style.css"/>
   <script src="js/theme.js"></script>
+  <style>
+    /* Estilo dos inputs no tema escuro */
+    [data-theme="dark"] .form-input {
+      background-color: #2a2d3a !important;
+      color: #e4e6eb !important;
+      border-color: #3a3d4a !important;
+    }
+    
+    [data-theme="dark"] .form-input::placeholder {
+      color: #8a8d9a !important;
+    }
+    
+    [data-theme="dark"] .form-input:focus {
+      background-color: #3a3d4a !important;
+      color: #e4e6eb !important;
+      border-color: #6c63ff !important;
+    }
+    
+    /* Estilo das labels no tema escuro */
+    [data-theme="dark"] .form-label {
+      color: #e4e6eb !important;
+    }
+    
+    /* Estilo dos inputs no tema claro */
+    .form-input {
+      color: #1a1a1a !important;
+      background-color: #ffffff !important;
+    }
+    
+    .form-input::placeholder {
+      color: #999999 !important;
+    }
+  </style>
 </head>
 <body>
 <div class="auth-page">
