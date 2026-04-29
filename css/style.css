@@ -1456,9 +1456,20 @@ input, textarea, select { font-family: inherit; outline: none; }
 }
 
 [data-theme="dark"] .auth-form .form-input {
-  background: #f5f7fa;
-  color: var(--text-primary);
-  border-color: var(--border);
+  background: #2a2d3a !important;
+  color: #e4e6eb !important;
+  border-color: #3a3d4a !important;
+}
+
+[data-theme="dark"] .auth-form .form-input::placeholder {
+  color: #8a8d9a !important;
+}
+
+[data-theme="dark"] .auth-form .form-input:focus {
+  background: #3a3d4a !important;
+  color: #e4e6eb !important;
+  border-color: #6c63ff !important;
+  box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.2);
 }
 
 /* Dicas de validação */
