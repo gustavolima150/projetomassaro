@@ -7,6 +7,18 @@
   <link rel="stylesheet" href="css/style.css"/>
   <script src="js/theme.js"></script>
   <script src="js/auth.js"></script>
+  <script>
+    // Verificar autenticação imediatamente
+    (function() {
+      const token = localStorage.getItem('auth_token') || localStorage.getItem('flesk_token');
+      const userId = localStorage.getItem('user_id') || localStorage.getItem('flesk_user_id');
+      
+      // Se não está autenticado, redireciona para landing
+      if (!token || !userId) {
+        window.location.href = 'landing.html';
+      }
+    })();
+  </script>
   <style>
     @keyframes progressSpin {
       0% { background-position: 0 0; }

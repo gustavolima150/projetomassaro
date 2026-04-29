@@ -13,7 +13,7 @@ function checkAuthentication() {
     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
     
     if (!publicPages.includes(currentPage) && currentPage !== '') {
-      window.location.href = 'login.html';
+      window.location.href = 'landing.html';
     }
   }
 }
