@@ -10,7 +10,7 @@
 // CONFIGURAÇÃO — apenas chave pública no frontend
 // ============================================================
 const FLESK_CONFIG = {
-  BACKEND_URL: 'http://localhost:3001',  // Troque pela URL do seu backend em produção
+  BACKEND_URL: 'https://projetomassaro-production.up.railway.app',  // URL do backend em produção
   // A chave abaixo é pública (publishable) — segura no frontend
   SUPABASE_ANON_KEY: 'sb_publishable_ez0pJACLC53mOGkzmV1yrA_FCv67HRz'
 };
